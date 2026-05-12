@@ -1,0 +1,39 @@
+{
+  "entities": {
+    "Comment": {
+      "title": "Comment",
+      "description": "User feedback or gratitude messages",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "description": "The message content" },
+        "authorName": { "type": "string", "description": "Name of the person who commented" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the comment was made" },
+        "userId": { "type": "string", "description": "Auth ID of the user (if any)" }
+      },
+      "required": ["text", "authorName", "createdAt"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "Calendar events for the public agenda",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "description": "Display date" },
+        "title": { "type": "string", "description": "Name of the event" },
+        "location": { "type": "string", "description": "Where it happens" },
+        "status": { "type": "string", "enum": ["Confirmado", "Em Planejamento", "Recorrente", "Ativo"] },
+        "order": { "type": "number", "description": "Sort order" }
+      },
+      "required": ["date", "title", "location", "status"]
+    }
+  },
+  "firestore": {
+    "comments": {
+      "schema": "Comment",
+      "description": "Public feedback and messages"
+    },
+    "events": {
+      "schema": "Event",
+      "description": "Public agenda events"
+    }
+  }
+}

@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // 1. Comments
+    match /comments/{commentId} {
+      function isValidComment(data) {
+        return data.keys().hasAll(['text', 'authorName', 'createdAt']) &&
+               data.keys().size() <= 4 &&
+               data.text is string && data.text.size() > 0 && data.text.size() <= 500 &&
+               data.authorName is string && data.authorName.size() > 0 && data.authorName.size() <= 100 &&
+               data.createdAt == request.time &&
+               (data.get('userId', null) == null || data.userId == request.auth.uid);
+      }
+
+      allow read: if true; // Publicly viewable
+      allow create: if isValidId(commentId) && isValidComment(incoming());
+      allow update, delete: if isAdmin();
+    }
+
+    // 2. Events
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 3. Admin list (read only for system/authorized)
+    match /admins/{adminId} {
+      allow read: if isSignedIn() && request.auth.uid == adminId;
+      allow write: if false; // Only manageable through console/server
+    }
+  }
+}
