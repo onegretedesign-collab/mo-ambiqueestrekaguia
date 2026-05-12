@@ -195,7 +195,7 @@ const ImpactReportModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             <div className="grid lg:grid-cols-2 gap-12 items-start">
               <div className="space-y-6">
                 <p className="text-xl text-white leading-relaxed font-light">
-                  Fundado em 12 de outubro de 2002 no bairro São Jorge, em Uberlândia-MG, o <span className="text-primary font-bold">Terno Moçambique Estrela Guia</span> nasceu do sonho de Madrinha Iara e Capitão Malaquias de criar um porto seguro para a cultura e a dignidade humana.
+                  Fundado em 12 de outubro de 2002 no bairro São Jorge, em Uberlândia-MG, o <span className="text-primary font-bold">Terno Moçambique Estrela Guia</span> nasceu do sonho de Capitão Malaquias e Madrinha Iara de criar um porto seguro para a cultura e a dignidade humana.
                 </p>
                 <p className="text-sm text-white/50 leading-relaxed">
                   O que começou como um grupo de Congado para celebrar a fé e a ancestralidade afro-brasileira, evoluiu para uma organização social robusta que atende centenas de famílias em situação de vulnerabilidade, mantendo as raízes vivas enquanto planta sementes para o futuro.
@@ -579,7 +579,7 @@ const AboutSection = ({ onOpenImpactReport }: { onOpenImpactReport: () => void }
              "Fundado em 2002 no bairro São Jorge, preservamos a tradição do Congado e transformamos vidas através da cultura e inclusão social."
            </p>
            <p className="text-sm text-white/40 leading-relaxed mb-8">
-             Fundada em 2002 por <span className="text-white font-bold">Iara Aparecida Ferreira (Madrinha Iara)</span> e seu esposo <span className="inline-flex items-center gap-2 bg-white/5 pr-4 pl-1 py-1 rounded-full border border-white/10 mx-1 align-middle"><img src="https://i.postimg.cc/RVhnhWqj/CAPITAO-MALAQUIAS-FOTO.png" className="w-8 h-8 rounded-full object-cover" alt="Malaquias Preto" referrerPolicy="no-referrer" /><span className="text-white font-bold">Malaquias Preto</span></span>, nossa organização atua como guardiã das tradições e promotora da dignidade humana.
+             Fundada em 2002 por <span className="inline-flex items-center gap-2 bg-white/5 pr-4 pl-1 py-1 rounded-full border border-white/10 mx-1 align-middle"><img src="https://i.postimg.cc/RVhnhWqj/CAPITAO-MALAQUIAS-FOTO.png" className="w-8 h-8 rounded-full object-cover" alt="Malaquias Preto" referrerPolicy="no-referrer" /><span className="text-white font-bold">Malaquias Preto</span></span> e sua esposa <span className="text-white font-bold">Iara Aparecida Ferreira (Madrinha Iara)</span>, nossa organização atua como guardiã das tradições e promotora da dignidade humana.
            </p>
            <ul className="grid grid-cols-2 gap-4 mb-10">
              {["Cultura", "Esporte", "Educação", "Social"].map(item => (
