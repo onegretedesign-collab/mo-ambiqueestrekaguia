@@ -579,7 +579,7 @@ const AboutSection = ({ onOpenImpactReport }: { onOpenImpactReport: () => void }
              "Fundado em 2002 no bairro São Jorge, preservamos a tradição do Congado e transformamos vidas através da cultura e inclusão social."
            </p>
            <p className="text-sm text-white/40 leading-relaxed mb-8">
-             Fundada em 2002 por <span className="inline-flex items-center gap-2 bg-white/5 pr-4 pl-1 py-1 rounded-full border border-white/10 mx-1 align-middle"><img src="https://i.postimg.cc/RVhnhWqj/CAPITAO-MALAQUIAS-FOTO.png" className="w-8 h-8 rounded-full object-cover" alt="Malaquias Preto" referrerPolicy="no-referrer" /><span className="text-white font-bold">Malaquias Preto</span></span> e sua esposa <span className="text-white font-bold">Iara Aparecida Ferreira (Madrinha Iara)</span>, nossa organização atua como guardiã das tradições e promotora da dignidade humana.
+             Fundada em 2002 por <span className="text-white font-bold">Malaquias Preto</span> e sua esposa <span className="text-white font-bold">Iara Aparecida Ferreira (Madrinha Iara)</span>, nossa organização atua como guardiã das tradições e promotora da dignidade humana.
            </p>
            <ul className="grid grid-cols-2 gap-4 mb-10">
              {["Cultura", "Esporte", "Educação", "Social"].map(item => (
