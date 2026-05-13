@@ -946,24 +946,104 @@ const Agenda = () => {
 };
 
 const Gallery = () => {
-  const images = [
-    "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=1000",
-    "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1000",
-    "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=1000",
-    "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=1000",
-    "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=1000"
+  const [selectedGallery, setSelectedGallery] = useState<number | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const galleries = [
+    {
+      id: 1,
+      title: "Festa do Rosário 2023",
+      date: "12 de Outubro, 2023",
+      location: "Sede Moçambique",
+      cover: "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=1000",
+      images: [
+        "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=1000",
+        "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1000",
+        "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=1000"
+      ]
+    },
+    {
+      id: 2,
+      title: "Oficina de Percussão",
+      date: "Todo Sábado",
+      location: "Ponto de Cultura",
+      cover: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1000",
+      images: [
+        "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1000",
+        "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=1000"
+      ]
+    },
+    {
+      id: 3,
+      title: "Consciência Negra",
+      date: "Novembro 2023",
+      location: "Praça Tubal Vilela",
+      cover: "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=1000",
+      images: [
+        "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=1000",
+        "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=1000"
+      ]
+    },
+    {
+      id: 4,
+      title: "Ação Solidária",
+      date: "Dezembro 2023",
+      location: "Bairro São Jorge",
+      cover: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=1000",
+      images: [
+        "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=1000",
+        "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=1000"
+      ]
+    },
+    {
+      id: 5,
+      title: "Ensaio Geral",
+      date: "Setembro 2023",
+      location: "Rua do Dólar",
+      cover: "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=1000",
+      images: [
+        "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=1000",
+        "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=1000"
+      ]
+    }
   ];
 
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const activeGallery = galleries.find(g => g.id === selectedGallery);
+
+  const handleDownload = async (imageUrl: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `estrela-guia-galeria-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      window.open(imageUrl, '_blank');
+    }
+  };
+
+  const nextImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (activeGallery) {
+      setCurrentImageIndex((prev) => (prev + 1) % activeGallery.images.length);
+    }
+  };
+
+  const prevImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (activeGallery) {
+      setCurrentImageIndex((prev) => (prev - 1 + activeGallery.images.length) % activeGallery.images.length);
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
   };
 
   const itemVariants = {
@@ -974,84 +1054,177 @@ const Gallery = () => {
   return (
     <section id="galeria" className="py-24 px-6 bg-[#050505]">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="w-2 h-12 bg-primary rounded-full" />
-          <h2 className="text-4xl font-bold uppercase tracking-tight font-display">Galeria de Ações</h2>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+          <div className="flex items-center gap-4">
+            <div className="w-2 h-16 bg-primary rounded-full shadow-[0_0_20px_rgba(255,165,0,0.3)]" />
+            <div>
+              <span className="text-primary text-[10px] font-black uppercase tracking-[0.4em] mb-2 block">Memórias Coletivas</span>
+              <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Álbuns de Eventos</h2>
+            </div>
+          </div>
+          <p className="text-white/30 text-sm max-w-sm font-medium leading-relaxed">
+            Cada miniatura abre uma galeria completa. Explore nossa história através das lentes da comunidade.
+          </p>
         </div>
-        <p className="text-white/40 mb-12 font-medium">Clique nas imagens para ampliar e ver detalhes das nossas atividades.</p>
         
         <motion.div 
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="flex flex-col lg:flex-row gap-4 h-[auto] lg:h-[600px]"
+          className="flex flex-col lg:flex-row gap-6 h-auto lg:h-[650px]"
         >
-          {images.map((img, i) => (
+          {galleries.map((gallery) => (
             <motion.div 
-              key={i}
+              key={gallery.id}
               variants={itemVariants}
-              whileHover={{ flex: 2 }}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              onClick={() => setSelectedImage(img)}
-              className="relative overflow-hidden rounded-[2rem] border border-white/10 flex-1 h-[300px] lg:h-full cursor-pointer group shadow-2xl"
+              whileHover={{ flex: 1.8 }}
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              onClick={() => {
+                setSelectedGallery(gallery.id);
+                setCurrentImageIndex(0);
+              }}
+              className="relative overflow-hidden rounded-[3rem] border border-white/10 flex-1 h-[400px] lg:h-full cursor-pointer group shadow-2xl bg-black"
             >
               <motion.img 
-                src={img} 
-                alt="Galeria" 
-                initial={{ scale: 1.2, filter: "grayscale(100%)" }}
-                whileHover={{ scale: 1, filter: "grayscale(0%)" }}
-                transition={{ duration: 0.6 }}
-                className="w-full h-full object-cover grayscale group-hover:grayscale-0 contrast-125 transition-all duration-700"
+                src={gallery.cover} 
+                alt={gallery.title} 
+                className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 group-hover:brightness-90 transition-all duration-700"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-black/20" />
               
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
-                  <div className="w-6 h-6 border-2 border-white/50 rounded-full flex items-center justify-center">
-                    <div className="w-1 h-1 bg-white rounded-full" />
-                  </div>
+              {/* Labels */}
+              <div className="absolute bottom-10 left-10 right-10">
+                <div className="overflow-hidden">
+                  <motion.div
+                    initial={{ y: 50, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    className="space-y-1"
+                  >
+                    <span className="text-primary text-[10px] font-black uppercase tracking-widest bg-black/40 backdrop-blur-sm px-4 py-1.5 rounded-full inline-block mb-3 border border-primary/20">
+                      {gallery.date}
+                    </span>
+                    <h3 className="text-2xl font-black text-white uppercase leading-none tracking-tight group-hover:text-primary transition-colors">
+                      {gallery.title}
+                    </h3>
+                    <div className="flex items-center gap-2 text-white/40 text-xs font-bold uppercase tracking-widest mt-2 overflow-hidden">
+                      <MapPin className="w-3 h-3 text-primary shrink-0" /> 
+                      <span className="truncate">{gallery.location}</span>
+                    </div>
+                  </motion.div>
                 </div>
               </div>
 
-              <div className="absolute bottom-6 left-6 p-4 bg-black/80 backdrop-blur-md rounded-2xl border border-white/10 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
-                <span className="text-[10px] uppercase font-black tracking-widest text-primary">Estrela Guia 2026</span>
+              {/* Hover Overlay */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="w-16 h-16 rounded-full bg-primary/20 backdrop-blur-xl border border-primary/30 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                  <Share2 className="w-6 h-6 rotate-45" />
+                </div>
               </div>
             </motion.div>
           ))}
         </motion.div>
       </div>
 
-      {/* Lightbox */}
+      {/* Lightbox Modal */}
       <AnimatePresence>
-        {selectedImage && (
+        {selectedGallery && activeGallery && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-6 md:p-20"
-            onClick={() => setSelectedImage(null)}
+            className="fixed inset-0 z-[150] bg-black/98 backdrop-blur-2xl flex items-center justify-center p-4 lg:p-12"
+            onClick={() => setSelectedGallery(null)}
           >
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="absolute top-10 right-10 p-4 border border-white/10 rounded-full hover:bg-white/5 transition-colors"
-              onClick={() => setSelectedImage(null)}
-            >
-              <X className="w-6 h-6" />
-            </motion.button>
+            <div className="absolute top-8 left-8 lg:top-12 lg:left-12 z-20">
+              <span className="text-primary text-[10px] font-black uppercase tracking-[0.4em] mb-2 block">{activeGallery.date}</span>
+              <h2 className="text-3xl lg:text-5xl font-black text-white uppercase tracking-tighter">{activeGallery.title}</h2>
+              <div className="flex items-center gap-2 text-white/40 text-xs font-bold uppercase tracking-widest mt-2">
+                <MapPin className="w-4 h-4 text-primary" /> {activeGallery.location}
+              </div>
+            </div>
+
+            <div className="absolute top-8 right-8 lg:top-12 lg:right-12 z-20 flex gap-4">
+              <motion.button
+                whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.1)" }}
+                whileActive={{ scale: 0.9 }}
+                className="p-5 border border-white/10 rounded-full text-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownload(activeGallery.images[currentImageIndex]);
+                }}
+              >
+                <Download className="w-8 h-8" />
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.1)" }}
+                whileActive={{ scale: 0.9 }}
+                className="p-5 border border-white/10 rounded-full text-white"
+                onClick={() => setSelectedGallery(null)}
+              >
+                <X className="w-8 h-8" />
+              </motion.button>
+            </div>
             
-            <motion.img
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              src={selectedImage}
-              alt="Ampliado"
-              className="max-w-full max-h-full rounded-3xl object-contain shadow-2xl"
-              referrerPolicy="no-referrer"
-              onClick={(e) => e.stopPropagation()}
-            />
+            {/* Gallery Navigation */}
+            <div className="relative w-full h-full max-w-7xl flex items-center justify-center">
+              <button 
+                onClick={prevImage}
+                className="absolute left-0 p-4 lg:p-8 text-white/20 hover:text-primary transition-colors z-30"
+              >
+                <ChevronRight className="w-12 h-12 lg:w-20 lg:h-20 rotate-180" />
+              </button>
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentImageIndex}
+                  initial={{ opacity: 0, scale: 0.9, x: 50 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, x: -50 }}
+                  transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                  className="w-full h-full flex items-center justify-center p-12"
+                >
+                  <img
+                    src={activeGallery.images[currentImageIndex]}
+                    alt={`Foto ${currentImageIndex + 1}`}
+                    className="max-w-full max-h-full rounded-3xl object-contain shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-white/5"
+                    referrerPolicy="no-referrer"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </motion.div>
+              </AnimatePresence>
+
+              <button 
+                onClick={nextImage}
+                className="absolute right-0 p-4 lg:p-8 text-white/20 hover:text-primary transition-colors z-30"
+              >
+                <ChevronRight className="w-12 h-12 lg:w-20 lg:h-20" />
+              </button>
+            </div>
+
+            {/* Pagination Dots */}
+            <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+              {activeGallery.images.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex(i);
+                  }}
+                  className={`h-1.5 transition-all duration-500 rounded-full ${
+                    i === currentImageIndex 
+                      ? "w-12 bg-primary shadow-[0_0_15px_rgba(255,165,0,0.5)]" 
+                      : "w-2 bg-white/20 hover:bg-white/40"
+                  }`}
+                />
+              ))}
+            </div>
+
+            <div className="absolute bottom-12 right-12 text-white/20 font-black text-2xl uppercase tracking-tighter">
+              {currentImageIndex + 1} / {activeGallery.images.length}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1272,9 +1445,10 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto">
         <div className="grid md:grid-cols-3 gap-16 mb-20">
           <div>
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center font-black text-black text-xl">E</div>
-              <span className="font-display font-black text-xl tracking-tighter uppercase">Estrela Guia</span>
+            <div className="flex items-center mb-8">
+              <span className="font-display font-black text-xl uppercase text-white tracking-tight">
+                Moçambique Estrela Guia
+              </span>
             </div>
             <p className="text-white/40 leading-relaxed italic">"Resistência que canta, fé que guia. Patrimônio imaterial de Uberlândia."</p>
           </div>
