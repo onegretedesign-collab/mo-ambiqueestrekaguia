@@ -15,7 +15,8 @@ import {
   Shield,
   History,
   FileText,
-  X
+  X,
+  Menu
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { subscribeToComments, addComment, type Comment } from "../services/commentService";
@@ -430,34 +431,108 @@ const TopBar = () => {
 };
 
 const Navbar = ({ onOpenDonation }: { onOpenDonation: () => void }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const menuItems = [
+    { label: "Início", href: "#início" },
+    { label: "Sobre Nós", href: "#sobre-nós" },
+    { label: "Projetos", href: "#projetos" },
+    { label: "Agenda", href: "#agenda" },
+    { label: "Galeria", href: "#galeria" }
+  ];
+
   return (
-    <nav className="sticky top-0 w-full z-50 bg-black/90 backdrop-blur-md border-b border-white/5">
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <div className="flex items-center">
-          <span className="font-display font-black text-lg md:text-xl uppercase text-white tracking-tight">
-            Moçambique Estrela Guia
-          </span>
-        </div>
-        <div className="hidden md:flex items-center gap-10">
-          {["Início", "Sobre Nós", "Projetos", "Agenda", "Galeria"].map((item) => (
-            <a 
-              key={item} 
-              href={`#${item.toLowerCase().replace(" ", "-")}`} 
-              className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors relative group"
+    <>
+      <nav className="sticky top-0 w-full z-50 bg-black/90 backdrop-blur-md border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center">
+            <span className="font-display font-black text-lg md:text-xl uppercase text-white tracking-tight">
+              Moçambique Estrela Guia
+            </span>
+          </div>
+          
+          <div className="hidden md:flex items-center gap-10">
+            {menuItems.map((item) => (
+              <a 
+                key={item.label} 
+                href={item.href} 
+                className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors relative group"
+              >
+                {item.label}
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
+              </a>
+            ))}
+            <button 
+              onClick={onOpenDonation}
+              className="bg-primary hover:bg-orange-600 text-black px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/10 hover:shadow-primary/30 active:scale-95"
             >
-              {item}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
-            </a>
-          ))}
+              Doar Agora
+            </button>
+          </div>
+
           <button 
-            onClick={onOpenDonation}
-            className="bg-primary hover:bg-orange-600 text-black px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/10 hover:shadow-primary/30 active:scale-95"
+            onClick={() => setIsMenuOpen(true)}
+            className="md:hidden p-2 text-white/70 hover:text-primary transition-colors"
           >
-            Doar Agora
+            <Menu className="w-6 h-6" />
           </button>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] md:hidden"
+          >
+            <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => setIsMenuOpen(false)} />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="absolute top-0 right-0 h-full w-[80%] bg-[#0A0A0A] border-l border-white/5 p-12 flex flex-col"
+            >
+              <div className="flex justify-between items-center mb-16">
+                <span className="font-display font-black text-primary text-sm uppercase tracking-[0.2em]">Menu</span>
+                <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-white/5 rounded-full">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="flex-1 flex flex-col gap-8">
+                {menuItems.map((item, i) => (
+                  <motion.a
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => setIsMenuOpen(false)}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="text-3xl font-black uppercase tracking-tighter hover:text-primary transition-colors"
+                  >
+                    {item.label}
+                  </motion.a>
+                ))}
+              </div>
+
+              <button 
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onOpenDonation();
+                }}
+                className="w-full py-6 bg-primary text-black font-black uppercase tracking-widest text-xs rounded-2xl shadow-2xl shadow-primary/20"
+              >
+                Doar Agora
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
@@ -484,7 +559,7 @@ const Hero = ({ onOpenDocuments }: { onOpenDocuments: () => void }) => {
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.3em] mb-6">
             Cultura Viva e Transformação Social
           </span>
-          <h1 className="text-lg md:text-2xl font-black mb-4 leading-tight text-white whitespace-nowrap">
+          <h1 className="text-4xl md:text-7xl font-black mb-4 leading-[1.1] text-white uppercase tracking-tighter">
             AJUDE A <span className="text-primary">PRESERVAR</span> NOSSA HISTÓRIA
           </h1>
           <p className="text-xs md:text-sm text-white/50 mb-8 font-light leading-relaxed max-w-md">
@@ -612,7 +687,7 @@ const ProjectsSection = () => {
     },
     { 
       title: "Oficinas Criativas", 
-      desc: "Dança (Afro/Street), Percussão, Artesanato, Grafite, Culinária, Zumba, Balé, Cavaco, Violão, Barbeiro e Contação de História.",
+      desc: "Dança (Afro/Street), Percussão, Artesanato, Grafite, Culinária, Zumba, Balé, Cavaco, Violão, Barbeiro, Contação de História, Capoeira e Projeto 60+ Canto Coral.",
       image: "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=800"
     },
     { 
@@ -671,7 +746,9 @@ const ProjectsSection = () => {
             { label: "Balé", icon: "🩰" },
             { label: "Violão", icon: "🎸" },
             { label: "Barbeiro", icon: "✂️" },
-            { label: "Histórias", icon: "📚" }
+            { label: "Histórias", icon: "📚" },
+            { label: "Capoeira", icon: "🥋" },
+            { label: "60+ Coral", icon: "🎶" }
           ].map((skill, i) => (
             <motion.div 
               key={skill.label}
@@ -710,8 +787,8 @@ const CounterSection = () => {
               ${i === 3 ? "lg:border-r-0" : ""}
             `}
           >
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-70 mb-3 block">{s.label}</span>
-            <span className="block text-6xl md:text-8xl font-black tracking-tighter leading-none">{s.value}</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-70 mb-2 block">{s.label}</span>
+            <span className="block text-5xl md:text-8xl font-black tracking-tighter leading-none">{s.value}</span>
           </div>
         ))}
       </div>
@@ -721,7 +798,7 @@ const CounterSection = () => {
 
 const VideoSection = () => {
   return (
-    <section className="py-40 relative flex items-center justify-center overflow-hidden">
+    <section className="py-24 md:py-40 relative flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 bg-black">
         <img 
           src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=2000" 
@@ -812,7 +889,8 @@ const Agenda = () => {
           <h2 className="text-4xl font-bold uppercase tracking-tight font-display">Agenda Pública</h2>
         </div>
         
-        <div className="overflow-x-auto rounded-3xl border border-white/5 shadow-2xl">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto rounded-3xl border border-white/5 shadow-2xl">
           <table className="w-full">
             <thead>
               <tr className="bg-primary text-black">
@@ -837,6 +915,30 @@ const Agenda = () => {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile List View */}
+        <div className="md:hidden space-y-4">
+          {displayEvents.map((ev, i) => (
+            <motion.div 
+              key={i}
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 space-y-4"
+            >
+              <div className="flex justify-between items-start">
+                <span className="font-black text-primary text-xs uppercase tracking-widest">{ev.date}</span>
+                <span className="px-4 py-1.5 rounded-lg bg-white/5 text-[8px] font-black uppercase tracking-widest text-white/40">
+                  {ev.status}
+                </span>
+              </div>
+              <h3 className="text-xl font-bold text-white leading-tight">{ev.title}</h3>
+              <div className="flex items-center gap-2 text-white/30 text-[10px] uppercase font-bold tracking-widest">
+                <MapPin className="w-3 h-3 text-primary" /> {ev.location}
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
@@ -883,16 +985,16 @@ const Gallery = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid grid-cols-2 lg:grid-cols-5 gap-4 h-[600px]"
+          className="flex flex-col lg:flex-row gap-4 h-[auto] lg:h-[600px]"
         >
           {images.map((img, i) => (
             <motion.div 
               key={i}
               variants={itemVariants}
-              whileHover={{ flex: i === 2 ? 1.5 : 1.3 }}
+              whileHover={{ flex: 2 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
               onClick={() => setSelectedImage(img)}
-              className={`relative overflow-hidden rounded-[2rem] border border-white/10 flex-1 h-full cursor-pointer group shadow-2xl`}
+              className="relative overflow-hidden rounded-[2rem] border border-white/10 flex-1 h-[300px] lg:h-full cursor-pointer group shadow-2xl"
             >
               <motion.img 
                 src={img} 
