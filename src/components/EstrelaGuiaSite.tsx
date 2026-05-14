@@ -16,7 +16,8 @@ import {
   History,
   FileText,
   X,
-  Menu
+  Menu,
+  Copy
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { subscribeToComments, addComment, type Comment } from "../services/commentService";
@@ -364,9 +365,14 @@ const TransparencyPortal = ({ onBack, onViewPdf }: { onBack: () => void; onViewP
         <div className="mb-20">
           <span className="text-primary text-[10px] font-black uppercase tracking-[0.4em] mb-4 block">Institucional</span>
           <h1 className="text-5xl md:text-7xl font-black mb-8 leading-none uppercase">Portal da<br/><span className="text-primary italic">Transparência</span></h1>
-          <p className="text-white/40 max-w-2xl leading-relaxed">
+          <p className="text-white/40 max-w-2xl leading-relaxed mb-6">
             Acesso público aos documentos oficiais, estatutos e relatórios de atividades da nossa organização. Compromisso real com a comunidade e nossos apoiadores.
           </p>
+          <div className="inline-block p-4 rounded-2xl bg-white/5 border border-white/10">
+            <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em] mb-1">Entidade Mantenedora:</p>
+            <p className="text-sm text-white font-bold">Terno Moçambique Estrela Guia</p>
+            <p className="text-xs text-white/40 mt-1 font-mono">CNPJ: 06.207.190/0001-07</p>
+          </div>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -628,50 +634,55 @@ const Features = () => {
 const AboutSection = ({ onOpenImpactReport }: { onOpenImpactReport: () => void }) => {
   return (
     <section id="sobre-nós" className="py-32 px-6 bg-black">
-      <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-24 items-center">
+      <div className="max-w-4xl mx-auto text-center">
         <div className="relative">
-          <div className="relative z-10 rounded-[3rem] overflow-hidden border-2 border-primary/20 aspect-square">
-            <img 
-              src="https://i.postimg.cc/Dws1wQsM/LOGO-PONTO-DE-CULTURA-MOC-AMBIQUE-ESTRELA-GUIA.png" 
-              alt="Logo Ponto de Cultura" 
-              className="w-full h-full object-contain p-8 bg-white/5"
-              referrerPolicy="no-referrer"
-            />
-          </div>
-          <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-20" />
-          <div className="absolute -top-10 -left-10 w-32 h-32 border-t-4 border-l-4 border-primary/40 rounded-tl-[3rem]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[150px] -z-10" />
           
-          <div className="absolute -bottom-6 -left-6 bg-black p-8 rounded-3xl border border-white/5 shadow-2xl scale-90 sm:scale-100">
-            <span className="block text-5xl font-black text-primary text-center">2002</span>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block text-center">Ano de Fundação</span>
+          <div className="mb-20">
+            <span className="text-primary text-[10px] font-black uppercase tracking-[0.4em] mb-4 block">Quem Somos</span>
+            <h2 className="text-4xl md:text-6xl font-black mb-12 leading-tight uppercase tracking-tighter text-white">
+              História e <span className="text-primary italic">Resistência</span>
+            </h2>
           </div>
-        </div>
 
-        <div>
-           <span className="text-primary text-[10px] font-black uppercase tracking-[0.4em] mb-4 block">Quem Somos</span>
-           <h2 className="text-5xl font-black mb-8 leading-tight uppercase">História e Resistência</h2>
-           <p className="text-xl text-white font-light leading-relaxed mb-8 border-l-4 border-primary pl-6">
-             "Fundado em 2002 no bairro São Jorge, preservamos a tradição do Congado e transformamos vidas através da cultura e inclusão social."
-           </p>
-           <p className="text-sm text-white/40 leading-relaxed mb-8">
-             Fundada em 2002 por <span className="text-white font-bold">Malaquias Preto</span> e sua esposa <span className="text-white font-bold">Iara Aparecida Ferreira (Madrinha Iara)</span>, nossa organização atua como guardiã das tradições e promotora da dignidade humana.
-           </p>
-           <ul className="grid grid-cols-2 gap-4 mb-10">
-             {["Cultura", "Esporte", "Educação", "Social"].map(item => (
-                <li key={item} className="flex items-center gap-3 text-sm font-bold uppercase tracking-wide">
-                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-                    <ChevronRight className="w-3 h-3 text-primary" />
+          <div className="space-y-20">
+            <div className="max-w-3xl mx-auto space-y-10">
+              <p className="text-xl md:text-2xl text-white font-light leading-relaxed italic">
+                "Fundado em 2002 no bairro São Jorge, preservamos a tradição do Congado e transformamos vidas através da cultura e inclusão social."
+              </p>
+              <p className="text-lg text-white/50 leading-relaxed font-light">
+                Fundada em 2002 por <span className="text-white font-bold">Malaquias Preto</span> e sua esposa <span className="text-white font-bold">Iara Aparecida Ferreira (Madrinha Iara)</span>, nossa organização atua como guardiã das tradições e promotora da dignidade humana através do Terno de Moçambique Estrela Guia.
+              </p>
+            </div>
+
+            <div className="space-y-12">
+              <div className="p-8 md:p-12 rounded-[3rem] bg-white/[0.02] border border-white/5 backdrop-blur-sm">
+                <h3 className="text-xs font-black uppercase tracking-[0.3em] text-primary mb-8">Nossos Pilares</h3>
+                <ul className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+                  {["Cultura", "Esporte", "Educação", "Social"].map(item => (
+                    <li key={item} className="flex flex-col items-center gap-4 text-xs md:text-sm font-black uppercase tracking-widest text-white/60">
+                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                        <ChevronRight className="w-5 h-5 text-primary" />
+                      </div>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="max-w-md mx-auto">
+                <button 
+                  onClick={onOpenImpactReport}
+                  className="w-full flex items-center justify-between px-10 py-8 bg-primary rounded-3xl text-black font-black uppercase tracking-[0.2em] text-sm group hover:bg-white transition-all shadow-2xl shadow-primary/20"
+                >
+                  Ver Relatório de Impacto 
+                  <div className="p-3 bg-black/10 rounded-xl transition-all group-hover:bg-black group-hover:text-white">
+                    <ChevronRight className="w-5 h-5" />
                   </div>
-                  {item}
-                </li>
-             ))}
-           </ul>
-           <button 
-            onClick={onOpenImpactReport}
-            className="flex items-center gap-4 text-primary font-black uppercase tracking-widest text-xs group"
-           >
-             Ver Relatório de Impacto <div className="p-3 bg-primary/10 rounded-full group-hover:bg-primary group-hover:text-black transition-all"><ChevronRight className="w-4 h-4" /></div>
-           </button>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -955,11 +966,11 @@ const Gallery = () => {
       title: "Festa do Rosário 2023",
       date: "12 de Outubro, 2023",
       location: "Sede Moçambique",
-      cover: "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=1000",
+      cover: "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=2000",
       images: [
-        "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=1000",
-        "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1000",
-        "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=1000"
+        "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=2000",
+        "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=2000",
+        "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=2000"
       ]
     },
     {
@@ -967,10 +978,10 @@ const Gallery = () => {
       title: "Oficina de Percussão",
       date: "Todo Sábado",
       location: "Ponto de Cultura",
-      cover: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1000",
+      cover: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=2000",
       images: [
-        "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1000",
-        "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=1000"
+        "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=2000",
+        "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=2000"
       ]
     },
     {
@@ -978,10 +989,10 @@ const Gallery = () => {
       title: "Consciência Negra",
       date: "Novembro 2023",
       location: "Praça Tubal Vilela",
-      cover: "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=1000",
+      cover: "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=2000",
       images: [
-        "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=1000",
-        "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=1000"
+        "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=2000",
+        "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000"
       ]
     },
     {
@@ -989,10 +1000,10 @@ const Gallery = () => {
       title: "Ação Solidária",
       date: "Dezembro 2023",
       location: "Bairro São Jorge",
-      cover: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=1000",
+      cover: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000",
       images: [
-        "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=1000",
-        "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=1000"
+        "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000",
+        "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=2000"
       ]
     },
     {
@@ -1000,10 +1011,23 @@ const Gallery = () => {
       title: "Ensaio Geral",
       date: "Setembro 2023",
       location: "Rua do Dólar",
-      cover: "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=1000",
+      cover: "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=2000",
       images: [
-        "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=1000",
-        "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=1000"
+        "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=2000",
+        "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=2000"
+      ]
+    },
+    {
+      id: 6,
+      title: "Roda de Capoeira",
+      date: "Regular",
+      location: "Ponto de Cultura",
+      cover: "https://i.postimg.cc/BQ6s5pQ4/Whats-App-Image-2026-05-12-at-09-18-41-3.jpg",
+      images: [
+        "https://i.postimg.cc/BQ6s5pQ4/Whats-App-Image-2026-05-12-at-09-18-41-3.jpg",
+        "https://i.postimg.cc/15tP0B5S/Whats-App-Image-2026-05-12-at-09-18-39-2.jpg",
+        "https://i.postimg.cc/9FMVPbFV/Whats-App-Image-2026-05-12-at-09-18-38-2.jpg",
+        "https://i.postimg.cc/jdgxB9kW/Whats-App-Image-2026-05-12-at-09-18-36-1.jpg"
       ]
     }
   ];
@@ -1134,62 +1158,62 @@ const Gallery = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[150] bg-black/98 backdrop-blur-2xl flex items-center justify-center p-4 lg:p-12"
+            className="fixed inset-0 z-[150] bg-black/98 md:backdrop-blur-3xl flex items-center justify-center"
             onClick={() => setSelectedGallery(null)}
           >
-            <div className="absolute top-8 left-8 lg:top-12 lg:left-12 z-20">
-              <span className="text-primary text-[10px] font-black uppercase tracking-[0.4em] mb-2 block">{activeGallery.date}</span>
-              <h2 className="text-3xl lg:text-5xl font-black text-white uppercase tracking-tighter">{activeGallery.title}</h2>
-              <div className="flex items-center gap-2 text-white/40 text-xs font-bold uppercase tracking-widest mt-2">
-                <MapPin className="w-4 h-4 text-primary" /> {activeGallery.location}
+            <div className="absolute top-6 left-6 lg:top-10 lg:left-10 z-20 bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/5">
+              <span className="text-primary text-[10px] font-black uppercase tracking-[0.4em] mb-1 block">{activeGallery.date}</span>
+              <h2 className="text-xl lg:text-3xl font-black text-white uppercase tracking-tighter">{activeGallery.title}</h2>
+              <div className="flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1">
+                <MapPin className="w-3 h-3 text-primary" /> {activeGallery.location}
               </div>
             </div>
 
-            <div className="absolute top-8 right-8 lg:top-12 lg:right-12 z-20 flex gap-4">
+            <div className="absolute top-6 right-6 lg:top-10 lg:right-10 z-20 flex gap-3">
               <motion.button
-                whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.1)" }}
+                whileHover={{ scale: 1.1, backgroundColor: "rgba(255,165,0,0.2)" }}
                 whileActive={{ scale: 0.9 }}
-                className="p-5 border border-white/10 rounded-full text-white"
+                className="p-4 border border-white/10 rounded-full text-white bg-black/40 backdrop-blur-md transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDownload(activeGallery.images[currentImageIndex]);
                 }}
               >
-                <Download className="w-8 h-8" />
+                <Download className="w-6 h-6 lg:w-7 lg:h-7" />
               </motion.button>
 
               <motion.button
                 whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.1)" }}
                 whileActive={{ scale: 0.9 }}
-                className="p-5 border border-white/10 rounded-full text-white"
+                className="p-4 border border-white/10 rounded-full text-white bg-black/40 backdrop-blur-md transition-colors"
                 onClick={() => setSelectedGallery(null)}
               >
-                <X className="w-8 h-8" />
+                <X className="w-6 h-6 lg:w-7 lg:h-7" />
               </motion.button>
             </div>
             
             {/* Gallery Navigation */}
-            <div className="relative w-full h-full max-w-7xl flex items-center justify-center">
+            <div className="relative w-full h-full flex items-center justify-center">
               <button 
                 onClick={prevImage}
-                className="absolute left-0 p-4 lg:p-8 text-white/20 hover:text-primary transition-colors z-30"
+                className="absolute left-4 lg:left-8 p-4 text-white/20 hover:text-primary transition-all z-30 bg-black/20 hover:bg-black/40 rounded-full backdrop-blur-sm"
               >
-                <ChevronRight className="w-12 h-12 lg:w-20 lg:h-20 rotate-180" />
+                <ChevronRight className="w-8 h-8 lg:w-16 lg:h-16 rotate-180" />
               </button>
 
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentImageIndex}
-                  initial={{ opacity: 0, scale: 0.9, x: 50 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, x: -50 }}
-                  transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                  className="w-full h-full flex items-center justify-center p-12"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.05 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full h-full flex items-center justify-center p-2 lg:p-6"
                 >
                   <img
                     src={activeGallery.images[currentImageIndex]}
                     alt={`Foto ${currentImageIndex + 1}`}
-                    className="max-w-full max-h-full rounded-3xl object-contain shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-white/5"
+                    className="max-w-full max-h-full object-contain shadow-[0_0_100px_rgba(0,0,0,0.8)]"
                     referrerPolicy="no-referrer"
                     onClick={(e) => e.stopPropagation()}
                   />
@@ -1198,32 +1222,34 @@ const Gallery = () => {
 
               <button 
                 onClick={nextImage}
-                className="absolute right-0 p-4 lg:p-8 text-white/20 hover:text-primary transition-colors z-30"
+                className="absolute right-4 lg:right-8 p-4 text-white/20 hover:text-primary transition-all z-30 bg-black/20 hover:bg-black/40 rounded-full backdrop-blur-sm"
               >
-                <ChevronRight className="w-12 h-12 lg:w-20 lg:h-20" />
+                <ChevronRight className="w-8 h-8 lg:w-16 lg:h-16" />
               </button>
             </div>
 
-            {/* Pagination Dots */}
-            <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-3 z-20">
-              {activeGallery.images.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentImageIndex(i);
-                  }}
-                  className={`h-1.5 transition-all duration-500 rounded-full ${
-                    i === currentImageIndex 
-                      ? "w-12 bg-primary shadow-[0_0_15px_rgba(255,165,0,0.5)]" 
-                      : "w-2 bg-white/20 hover:bg-white/40"
-                  }`}
-                />
-              ))}
-            </div>
-
-            <div className="absolute bottom-12 right-12 text-white/20 font-black text-2xl uppercase tracking-tighter">
-              {currentImageIndex + 1} / {activeGallery.images.length}
+            {/* Pagination/Counter Overlay */}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-6 z-20 bg-black/40 backdrop-blur-xl px-8 py-4 rounded-full border border-white/5">
+              <div className="flex gap-2">
+                {activeGallery.images.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImageIndex(i);
+                    }}
+                    className={`h-1 transition-all duration-500 rounded-full ${
+                      i === currentImageIndex 
+                        ? "w-8 bg-primary shadow-[0_0_10px_rgba(255,165,0,0.5)]" 
+                        : "w-2 bg-white/10 hover:bg-white/20"
+                    }`}
+                  />
+                ))}
+              </div>
+              <div className="w-px h-4 bg-white/10" />
+              <div className="text-white/40 font-black text-xs uppercase tracking-widest">
+                {currentImageIndex + 1} / {activeGallery.images.length}
+              </div>
             </div>
           </motion.div>
         )}
@@ -1246,6 +1272,12 @@ const TeamSection = () => {
         bio: "Iara Aparecida Ferreira, pilar fundamental na gestão social e acolhimento da comunidade.",
         image: "https://i.postimg.cc/jSRKRStd/Gemini-Generated-Image-4ohjaa4ohjaa4ohj.png"
       },
+      { 
+        name: "Elenion (Leno)", 
+        role: "Presidente", 
+        bio: "Uma das pessoas mais importantes da minha vida, meu padrasto que amo tanto Elenion ( Leno) , para quem não sabe ele não tem filhos de sangue, mas criou o gente, nos acompanhou nos levando ao altar para nos casar, estava em todas as minhas formaturas, padrinho do meu filho Luã( igreja), Marco Tulio (fogueira) e Lucas (fogueira) e está comigo em tudo que me proponho a fazer. Te amamos, te amamos, Feliz dia dos pais.",
+        image: "https://i.postimg.cc/JhvVqC01/ecea6dcf-501f-42a3-955a-ea26328edc79.jpg"
+      },
       { name: "Direção Coletiva", role: "Gestão Estratégica", bio: "Responsável pela ponte entre a tradição e as ações sociais, editais e parcerias externas." }
     ];
   
@@ -1256,7 +1288,7 @@ const TeamSection = () => {
             <div className="w-2 h-12 bg-primary rounded-full" />
             <h2 className="text-4xl font-bold font-display uppercase tracking-widest">Equipe Diretiva</h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {team.map((member, i) => (
               <motion.div 
                 key={member.role}
@@ -1405,19 +1437,30 @@ const DonationModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
         <p className="text-white/50 mb-8 leading-relaxed">Sua doação ajuda a manter nossa sede e projetos sociais vivos. Escolha um método:</p>
         
         <div className="space-y-4">
-          <div className="p-6 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between group hover:border-primary transition-colors cursor-pointer">
-            <div>
-              <span className="block font-black text-white">PIX (CNPJ)</span>
-              <span className="text-xs text-white/40">12.345.678/0001-90</span>
+          <div 
+            className="p-6 rounded-2xl bg-white/5 border border-white/10 group hover:border-primary transition-colors cursor-pointer"
+            onClick={() => {
+              navigator.clipboard.writeText("06207190000107");
+              alert("CNPJ copiado para o clipboard!");
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="block font-black text-white">PIX (CNPJ)</span>
+                <span className="text-xs text-white/40">06.207.190/0001-07</span>
+                <p className="text-[10px] text-white/20 mt-1 uppercase font-bold">Terno Moçambique Estrela Guia</p>
+              </div>
+              <button className="text-primary font-bold text-xs uppercase tracking-widest group-hover:underline flex items-center gap-2">
+                <Copy className="w-4 h-4" /> Copiar
+              </button>
             </div>
-            <button className="text-primary font-bold text-xs uppercase tracking-widest group-hover:underline">Copiar</button>
           </div>
           <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
-            <span className="block font-black text-white mb-2">Transferência Bancária</span>
+            <span className="block font-black text-white mb-2">Dados da Instituição</span>
             <div className="text-xs text-white/40 space-y-1">
-              <p>Banco do Brasil</p>
-              <p>Agência: 1234-5</p>
-              <p>Conta: 67890-X</p>
+              <p className="font-bold text-white/60">Terno Moçambique Estrela Guia</p>
+              <p>CNPJ: 06.207.190/0001-07</p>
+              <p>Banco: Caixa Econômica Federal</p>
             </div>
           </div>
         </div>
@@ -1450,7 +1493,11 @@ const Footer = () => {
                 Moçambique Estrela Guia
               </span>
             </div>
-            <p className="text-white/40 leading-relaxed italic">"Resistência que canta, fé que guia. Patrimônio imaterial de Uberlândia."</p>
+            <p className="text-white/40 leading-relaxed italic mb-4">"Resistência que canta, fé que guia. Patrimônio imaterial de Uberlândia."</p>
+            <div className="text-[10px] text-white/20 uppercase font-black tracking-[0.2em] space-y-1">
+              <p>Terno Moçambique Estrela Guia</p>
+              <p>CNPJ: 06.207.190/0001-07</p>
+            </div>
           </div>
           
           <div className="space-y-6">
