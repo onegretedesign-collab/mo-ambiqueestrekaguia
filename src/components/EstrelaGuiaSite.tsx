@@ -436,41 +436,111 @@ const TopBar = () => {
   );
 };
 
-const Navbar = ({ onOpenDonation }: { onOpenDonation: () => void }) => {
+const Navbar = ({ 
+  onOpenDonation,
+  currentView = "home",
+  onChangeView
+}: { 
+  onOpenDonation: () => void;
+  currentView?: "home" | "transparency" | "shows";
+  onChangeView: (view: "home" | "transparency" | "shows") => void;
+}) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("início");
 
   const menuItems = [
-    { label: "Início", href: "#início" },
-    { label: "Sobre Nós", href: "#sobre-nós" },
-    { label: "Projetos", href: "#projetos" },
-    { label: "Agenda", href: "#agenda" },
-    { label: "Galeria", href: "#galeria" }
+    { label: "Início", href: "#início", view: "home" as const },
+    { label: "Sobre Nós", href: "#sobre-nós", view: "home" as const },
+    { label: "Projetos", href: "#projetos", view: "home" as const },
+    { label: "Shows e Eventos", href: "#shows-eventos", view: "shows" as const },
+    { label: "Agenda", href: "#agenda", view: "home" as const },
+    { label: "Galeria", href: "#galeria", view: "home" as const }
   ];
+
+  useEffect(() => {
+    if (currentView !== "home") {
+      setActiveSection(currentView);
+      return;
+    }
+
+    const handleScroll = () => {
+      const sections = ["início", "sobre-nós", "projetos", "agenda", "galeria"];
+      const scrollPosition = window.scrollY + 200; // offset for nav height
+
+      for (const section of sections) {
+        const el = document.getElementById(section);
+        if (el) {
+          const top = el.offsetTop;
+          const height = el.offsetHeight;
+          if (scrollPosition >= top && scrollPosition < top + height) {
+            setActiveSection(section);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [currentView]);
+
+  const isItemActive = (item: typeof menuItems[number]) => {
+    if (currentView === "shows") {
+      return item.view === "shows";
+    }
+    if (currentView === "home") {
+      return item.view === "home" && item.href === `#${activeSection}`;
+    }
+    return false;
+  };
+
+  const handleItemClick = (e: React.MouseEvent, item: typeof menuItems[number]) => {
+    if (item.view === "shows") {
+      e.preventDefault();
+      onChangeView("shows");
+    } else {
+      if (currentView !== "home") {
+        e.preventDefault();
+        onChangeView("home");
+        // Wait for view transition
+        setTimeout(() => {
+          const target = document.querySelector(item.href);
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 150);
+      }
+    }
+  };
 
   return (
     <>
       <nav className="sticky top-0 w-full z-50 bg-black/90 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center">
-            <span className="font-display font-black text-lg md:text-xl uppercase text-white tracking-tight">
+          <div className="flex items-center cursor-pointer" onClick={(e) => { handleItemClick(e, menuItems[0]); }}>
+            <span className="font-display font-black text-lg md:text-xl uppercase text-white tracking-tight hover:text-primary transition-colors">
               Moçambique Estrela Guia
             </span>
           </div>
           
-          <div className="hidden md:flex items-center gap-10">
+          <div className="hidden md:flex items-center gap-8">
             {menuItems.map((item) => (
               <a 
                 key={item.label} 
                 href={item.href} 
-                className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors relative group"
+                onClick={(e) => handleItemClick(e, item)}
+                className={`text-xs font-bold uppercase tracking-widest transition-colors ${
+                  isItemActive(item) ? "text-primary" : "text-white/70 hover:text-primary"
+                }`}
               >
                 {item.label}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
               </a>
             ))}
             <button 
               onClick={onOpenDonation}
-              className="bg-primary hover:bg-orange-600 text-black px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/10 hover:shadow-primary/30 active:scale-95"
+              className="bg-primary hover:bg-orange-600 text-black px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/10 hover:shadow-primary/30 active:scale-95 animate-pulse"
             >
               Doar Agora
             </button>
@@ -512,13 +582,18 @@ const Navbar = ({ onOpenDonation }: { onOpenDonation: () => void }) => {
               <div className="flex-1 flex flex-col gap-8">
                 {menuItems.map((item, i) => (
                   <motion.a
-                    key={item.label}
-                    href={item.href}
-                    onClick={() => setIsMenuOpen(false)}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="text-3xl font-black uppercase tracking-tighter hover:text-primary transition-colors"
+                     key={item.label}
+                     href={item.href}
+                     onClick={(e) => {
+                       setIsMenuOpen(false);
+                       handleItemClick(e, item);
+                     }}
+                     initial={{ opacity: 0, x: 20 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     transition={{ delay: i * 0.1 }}
+                     className={`text-2xl font-black uppercase tracking-tighter transition-colors ${
+                       isItemActive(item) ? "text-primary" : "text-white hover:text-primary"
+                     }`}
                   >
                     {item.label}
                   </motion.a>
@@ -956,115 +1031,100 @@ const Agenda = () => {
   );
 };
 
-const Gallery = () => {
-  const [selectedGallery, setSelectedGallery] = useState<number | null>(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+// --- Shared Galleries Data ---
+const galleries = [
+  {
+    id: 1,
+    title: "Festa do Rosário 2023",
+    date: "12 de Outubro, 2023",
+    location: "Sede Moçambique",
+    cover: "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=2000",
+    description: "A principal festividade do calendário da congada, celebrando com profunda devoção Nossa Senhora do Rosário e São Benedito. A comunidade se une em orações, cortejos e cânticos ancestrais com as cores azul e rosa do Terno de Moçambique Estrela Guia, colorindo e emocionando as ruas do bairro São Jorge.",
+    images: [
+      "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=2000",
+      "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=2000",
+      "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=2000"
+    ]
+  },
+  {
+    id: 2,
+    title: "Oficina de Percussão",
+    date: "Todo Sábado",
+    location: "Ponto de Cultura",
+    cover: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=2000",
+    description: "Um espaço pedagógico e cultural de transmissão oral de saberes musicais. Nossas oficinas promovem o aprendizado dos ritmos tradicionais, toques de caixas e do gungunar dos tambores, conectando crianças, jovens e adultos com a pulsação ancestral de nosso patrimônio.",
+    images: [
+      "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=2000",
+      "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=2000"
+    ]
+  },
+  {
+    id: 3,
+    title: "Consciência Negra",
+    date: "Novembro 2023",
+    location: "Praça Tubal Vilela",
+    cover: "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=2000",
+    description: "Apresentações públicas, rodas de conversa e atos de celebração que exaltam a resistência espiritual e cultural da população negra. Realizamos manifestações que fortalecem a identidade afro-brasileira e defendem a igualdade social e o respeito em Uberlândia.",
+    images: [
+      "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=2000",
+      "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000"
+    ]
+  },
+  {
+    id: 4,
+    title: "Ação Solidária",
+    date: "Dezembro 2023",
+    location: "Bairro São Jorge",
+    cover: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000",
+    description: "Nosso compromisso social direto com o bem-estar de nossa comunidade. Realizamos a distribuição recorrente de alimentos, kits de higiene e agasalhos para as famílias em situação de vulnerabilidade no entorno de nossa sede, promovendo auxílio urgente e afeto.",
+    images: [
+      "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000",
+      "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=2000"
+    ]
+  },
+  {
+    id: 5,
+    title: "Ensaio Geral",
+    date: "Setembro 2023",
+    location: "Rua do Dólar",
+    cover: "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=2000",
+    description: "O momento sagrado em que todos os membros do Terno se encontram para alinhar o compasso dos tambores, afinar os cantos e ensaiar a marcha pelas ruas. Sob as orientações dos capitães, o ensaio geral prepara o espírito e a técnica da comunidade.",
+    images: [
+      "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=2000",
+      "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=2000"
+    ]
+  },
+  {
+    id: 6,
+    title: "Roda de Capoeira",
+    date: "Regular",
+    location: "Ponto de Cultura",
+    cover: "https://i.postimg.cc/BQ6s5pQ4/Whats-App-Image-2026-05-12-at-09-18-41-3.jpg",
+    description: "Excelente exemplo de integração física, de defesa histórica e de ritmo. Preservando a capoeira como símbolo de resistência na periferia, ensinamos técnicas corporais, canto, instrumentalização (berimbau, atabaque, pandeiro) e socialização reflexiva.",
+    images: [
+      "https://i.postimg.cc/BQ6s5pQ4/Whats-App-Image-2026-05-12-at-09-18-41-3.jpg",
+      "https://i.postimg.cc/15tP0B5S/Whats-App-Image-2026-05-12-at-09-18-39-2.jpg",
+      "https://i.postimg.cc/9FMVPbFV/Whats-App-Image-2026-05-12-at-09-18-38-2.jpg",
+      "https://i.postimg.cc/jdgxB9kW/Whats-App-Image-2026-05-12-at-09-18-36-1.jpg"
+    ]
+  },
+  {
+    id: 7,
+    title: "Festa Junina do Moçambique Estrela Guia",
+    date: "Junho",
+    location: "Sede Moçambique",
+    cover: "https://i.postimg.cc/XJCdncH7/3075998a-3aae-4468-9018-de160d328055.jpg",
+    description: "Nossa grande celebração de São João na sede do Terno. Uma fogueira imensa, mastro dos santos padroeiros, quadrilha animada e barraquinhas com quitutes deliciosos que unem os moradores de Uberlândia em um momento alegre e acolhedor.",
+    images: [
+      "https://i.postimg.cc/XJCdncH7/3075998a-3aae-4468-9018-de160d328055.jpg",
+      "https://i.postimg.cc/C1qkwHPK/466e5d6c-ea15-4772-8d2b-66c5ac31e1b4.jpg",
+      "https://i.postimg.cc/63vnBLj3/c6d95a5d-24fe-47ef-a64e-c311c108c87e.jpg",
+      "https://i.postimg.cc/3Rvm3CSN/ff61ddc2-b5eb-482b-9248-b8ce3d89999a.jpg"
+    ]
+  }
+];
 
-  const galleries = [
-    {
-      id: 1,
-      title: "Festa do Rosário 2023",
-      date: "12 de Outubro, 2023",
-      location: "Sede Moçambique",
-      cover: "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=2000",
-      images: [
-        "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=2000",
-        "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=2000",
-        "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=2000"
-      ]
-    },
-    {
-      id: 2,
-      title: "Oficina de Percussão",
-      date: "Todo Sábado",
-      location: "Ponto de Cultura",
-      cover: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=2000",
-      images: [
-        "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=2000",
-        "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=2000"
-      ]
-    },
-    {
-      id: 3,
-      title: "Consciência Negra",
-      date: "Novembro 2023",
-      location: "Praça Tubal Vilela",
-      cover: "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=2000",
-      images: [
-        "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=2000",
-        "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000"
-      ]
-    },
-    {
-      id: 4,
-      title: "Ação Solidária",
-      date: "Dezembro 2023",
-      location: "Bairro São Jorge",
-      cover: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000",
-      images: [
-        "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000",
-        "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=2000"
-      ]
-    },
-    {
-      id: 5,
-      title: "Ensaio Geral",
-      date: "Setembro 2023",
-      location: "Rua do Dólar",
-      cover: "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=2000",
-      images: [
-        "https://images.unsplash.com/photo-1514525253344-f814d07295bf?q=80&w=2000",
-        "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=2000"
-      ]
-    },
-    {
-      id: 6,
-      title: "Roda de Capoeira",
-      date: "Regular",
-      location: "Ponto de Cultura",
-      cover: "https://i.postimg.cc/BQ6s5pQ4/Whats-App-Image-2026-05-12-at-09-18-41-3.jpg",
-      images: [
-        "https://i.postimg.cc/BQ6s5pQ4/Whats-App-Image-2026-05-12-at-09-18-41-3.jpg",
-        "https://i.postimg.cc/15tP0B5S/Whats-App-Image-2026-05-12-at-09-18-39-2.jpg",
-        "https://i.postimg.cc/9FMVPbFV/Whats-App-Image-2026-05-12-at-09-18-38-2.jpg",
-        "https://i.postimg.cc/jdgxB9kW/Whats-App-Image-2026-05-12-at-09-18-36-1.jpg"
-      ]
-    }
-  ];
-
-  const activeGallery = galleries.find(g => g.id === selectedGallery);
-
-  const handleDownload = async (imageUrl: string) => {
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `estrela-guia-galeria-${Date.now()}.jpg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      window.open(imageUrl, '_blank');
-    }
-  };
-
-  const nextImage = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    if (activeGallery) {
-      setCurrentImageIndex((prev) => (prev + 1) % activeGallery.images.length);
-    }
-  };
-
-  const prevImage = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    if (activeGallery) {
-      setCurrentImageIndex((prev) => (prev - 1 + activeGallery.images.length) % activeGallery.images.length);
-    }
-  };
-
+const Gallery = ({ onOpenGallery }: { onOpenGallery: (id: number) => void }) => {
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
@@ -1104,10 +1164,7 @@ const Gallery = () => {
               variants={itemVariants}
               whileHover={{ flex: 1.8 }}
               transition={{ type: "spring", stiffness: 350, damping: 30 }}
-              onClick={() => {
-                setSelectedGallery(gallery.id);
-                setCurrentImageIndex(0);
-              }}
+              onClick={() => onOpenGallery(gallery.id)}
               className="relative overflow-hidden rounded-[3rem] border border-white/10 flex-1 h-[400px] lg:h-full cursor-pointer group shadow-2xl bg-black"
             >
               <motion.img 
@@ -1151,109 +1208,7 @@ const Gallery = () => {
         </motion.div>
       </div>
 
-      {/* Lightbox Modal */}
-      <AnimatePresence>
-        {selectedGallery && activeGallery && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[150] bg-black/98 md:backdrop-blur-3xl flex items-center justify-center"
-            onClick={() => setSelectedGallery(null)}
-          >
-            <div className="absolute top-6 left-6 lg:top-10 lg:left-10 z-20 bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/5">
-              <span className="text-primary text-[10px] font-black uppercase tracking-[0.4em] mb-1 block">{activeGallery.date}</span>
-              <h2 className="text-xl lg:text-3xl font-black text-white uppercase tracking-tighter">{activeGallery.title}</h2>
-              <div className="flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1">
-                <MapPin className="w-3 h-3 text-primary" /> {activeGallery.location}
-              </div>
-            </div>
 
-            <div className="absolute top-6 right-6 lg:top-10 lg:right-10 z-20 flex gap-3">
-              <motion.button
-                whileHover={{ scale: 1.1, backgroundColor: "rgba(255,165,0,0.2)" }}
-                whileActive={{ scale: 0.9 }}
-                className="p-4 border border-white/10 rounded-full text-white bg-black/40 backdrop-blur-md transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownload(activeGallery.images[currentImageIndex]);
-                }}
-              >
-                <Download className="w-6 h-6 lg:w-7 lg:h-7" />
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.1)" }}
-                whileActive={{ scale: 0.9 }}
-                className="p-4 border border-white/10 rounded-full text-white bg-black/40 backdrop-blur-md transition-colors"
-                onClick={() => setSelectedGallery(null)}
-              >
-                <X className="w-6 h-6 lg:w-7 lg:h-7" />
-              </motion.button>
-            </div>
-            
-            {/* Gallery Navigation */}
-            <div className="relative w-full h-full flex items-center justify-center">
-              <button 
-                onClick={prevImage}
-                className="absolute left-4 lg:left-8 p-4 text-white/20 hover:text-primary transition-all z-30 bg-black/20 hover:bg-black/40 rounded-full backdrop-blur-sm"
-              >
-                <ChevronRight className="w-8 h-8 lg:w-16 lg:h-16 rotate-180" />
-              </button>
-
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentImageIndex}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.05 }}
-                  transition={{ duration: 0.3 }}
-                  className="w-full h-full flex items-center justify-center p-2 lg:p-6"
-                >
-                  <img
-                    src={activeGallery.images[currentImageIndex]}
-                    alt={`Foto ${currentImageIndex + 1}`}
-                    className="max-w-full max-h-full object-contain shadow-[0_0_100px_rgba(0,0,0,0.8)]"
-                    referrerPolicy="no-referrer"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </motion.div>
-              </AnimatePresence>
-
-              <button 
-                onClick={nextImage}
-                className="absolute right-4 lg:right-8 p-4 text-white/20 hover:text-primary transition-all z-30 bg-black/20 hover:bg-black/40 rounded-full backdrop-blur-sm"
-              >
-                <ChevronRight className="w-8 h-8 lg:w-16 lg:h-16" />
-              </button>
-            </div>
-
-            {/* Pagination/Counter Overlay */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-6 z-20 bg-black/40 backdrop-blur-xl px-8 py-4 rounded-full border border-white/5">
-              <div className="flex gap-2">
-                {activeGallery.images.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCurrentImageIndex(i);
-                    }}
-                    className={`h-1 transition-all duration-500 rounded-full ${
-                      i === currentImageIndex 
-                        ? "w-8 bg-primary shadow-[0_0_10px_rgba(255,165,0,0.5)]" 
-                        : "w-2 bg-white/10 hover:bg-white/20"
-                    }`}
-                  />
-                ))}
-              </div>
-              <div className="w-px h-4 bg-white/10" />
-              <div className="text-white/40 font-black text-xs uppercase tracking-widest">
-                {currentImageIndex + 1} / {activeGallery.images.length}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </section>
   );
 };
@@ -1582,6 +1537,348 @@ const FloatingDonationButton = ({ onOpen }: { onOpen: () => void }) => {
   );
 };
 
+// --- Shows e Eventos Page Component ---
+interface EventShow {
+  id: number;
+  title: string;
+  date: string;
+  location: string;
+  cover: string;
+  description: string;
+  galleryId: number;
+}
+
+const eventsData: EventShow[] = [
+  {
+    id: 1,
+    title: "Folia de Reis",
+    date: "06 de Janeiro",
+    location: "Sede Moçambique Estrela Guia",
+    cover: "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=2000",
+    description: "O Terno de Moçambique Estrela Guia celebra a tradicional Folia de Reis com um grande cortejo musical que percorre as ruas do bairro. Com fardas impecáveis, caixas e gungas soando em uníssono, a comunidade entoa orações e cantos de louvor, preservando e compartilhando esta valiosa devoção secular de geração em geração.",
+    galleryId: 1
+  },
+  {
+    id: 2,
+    title: "Festa Junina do Moçambique",
+    date: "21 de Junho",
+    location: "Quartel Estrela Guia",
+    cover: "https://i.postimg.cc/XJCdncH7/3075998a-3aae-4468-9018-de160d328055.jpg",
+    description: `🔥 VEM AÍ A FESTA JUNINA DO MOÇAMBIQUE ESTRELA GUIA! 🌽🔥
+
+Prepare o traje caipira e venha viver uma tarde inesquecível de muita alegria, música e tradição! 🤠🎶
+
+🎤 Atrações Confirmadas:
+* Carvalho & Mariano
+* Grupo Quinteto do Samba
+* Alberto & Cristiano
+
+✨ E ainda teremos:
+🎊 Quadrilha
+🌽 Comidas Típicas
+🍹 Bebidas
+🎯 Bingo
+
+📅 21 de Junho — Domingo
+⏰ A partir das 12H
+📍 Rua do Dólar, 290 — São Jorge
+📌 Quartel Moçambique Estrela Guia
+
+🎟️ Entrada: 1KG de alimento não perecível
+
+❤️ Sua solidariedade faz a festa acontecer!
+Chame a família, os amigos e venha festejar com a gente! 🌻🔥`,
+    galleryId: 7
+  },
+  {
+    id: 3,
+    title: "Rodas Culturais de Capoeira",
+    date: "Finais de Semana",
+    location: "Ponto de Cultura Estrela Guia",
+    cover: "https://i.postimg.cc/BQ6s5pQ4/Whats-App-Image-2026-05-12-at-09-18-41-3.jpg",
+    description: "Encontros semanais dedicados à transmissão da capoeira como expressão legítima de resistência física e cultural. Unindo técnicas corporais, canto coletivo e compasso instrumental (berimbau, pandeiro, atabaque), fortalecemos o vínculo social e identitário.",
+    galleryId: 6
+  }
+];
+
+const ShowsEventosPage = ({ 
+  onBack, 
+  onOpenGallery 
+}: { 
+  onBack: () => void; 
+  onOpenGallery: (id: number) => void;
+}) => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="py-16 md:py-28 px-6 bg-[#030303] min-h-screen text-white font-sans"
+    >
+      <div className="max-w-7xl mx-auto">
+        {/* Voltar bar */}
+        <div className="flex justify-between items-center mb-16">
+          <button 
+            onClick={onBack}
+            className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary hover:text-white transition-colors group bg-white/5 border border-white/10 px-6 py-3 rounded-full hover:bg-white/10"
+          >
+            <ChevronRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
+            Voltar ao Início
+          </button>
+          <span className="text-white/20 font-mono text-[10px] uppercase tracking-widest leading-none">Estrela Guia / Shows e Eventos</span>
+        </div>
+
+        {/* Heading */}
+        <div className="flex items-center gap-6 mb-24">
+          <div className="w-2.5 h-20 bg-primary rounded-full shadow-[0_0_20px_rgba(255,165,0,0.5)]" />
+          <div>
+            <span className="text-primary text-[10px] font-black uppercase tracking-[0.4em] block mb-2">Programações e Vivências</span>
+            <h1 className="text-4xl md:text-7xl font-black uppercase tracking-tight leading-none">Shows e Eventos</h1>
+          </div>
+        </div>
+
+        {/* Dynamic alternating events list */}
+        <div className="space-y-36">
+          {eventsData.map((event, index) => {
+            const isEven = index % 2 === 0;
+            return (
+              <div 
+                key={event.id}
+                className={`flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-12 lg:gap-20 items-center`}
+              >
+                {/* Photo area */}
+                <div className="w-full lg:w-1/2 group">
+                  <div 
+                    onClick={() => onOpenGallery(event.galleryId)}
+                    className="relative overflow-hidden aspect-[4/3] rounded-[2.5rem] border border-white/10 bg-black cursor-pointer shadow-3xl group"
+                  >
+                    <img 
+                      src={event.cover} 
+                      alt={event.title}
+                      className="w-full h-full object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-95 group-hover:scale-105 transition-all duration-700" 
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/10 to-transparent opacity-60 group-hover:opacity-30 transition-opacity duration-300" />
+                    
+                    {/* Pulsing visual helper */}
+                    <div className="absolute top-6 right-6 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-widest text-[#FFA500]/90 flex items-center gap-2 group-hover:bg-primary group-hover:text-black transition-colors">
+                      <div className="w-2 h-2 rounded-full bg-[#FFA500] animate-pulse group-hover:bg-black" />
+                      Ver Galeria Completa
+                    </div>
+                  </div>
+                </div>
+
+                {/* Text area */}
+                <div className="w-full lg:w-1/2 flex flex-col justify-center space-y-6">
+                  <div className="flex items-center gap-3">
+                    <span className="text-primary text-[10px] font-black uppercase tracking-[0.2em] bg-primary/10 border border-primary/20 px-4 py-1.5 rounded-full inline-block">
+                      {event.date}
+                    </span>
+                    <span className="text-white/40 font-bold uppercase tracking-widest text-[10px] flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-primary shrink-0" />
+                      {event.location}
+                    </span>
+                  </div>
+
+                  <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-tight text-white group-hover:text-primary transition-colors">
+                    {event.title}
+                  </h2>
+
+                  <p className="text-white/60 text-sm md:text-base leading-relaxed font-medium whitespace-pre-line">
+                    {event.description}
+                  </p>
+
+                  <div className="pt-4">
+                    <button 
+                      onClick={() => onOpenGallery(event.galleryId)}
+                      className="inline-flex items-center gap-3 bg-white/5 border border-white/10 hover:bg-primary hover:text-black hover:border-transparent px-8 py-4 rounded-full text-xs font-black uppercase tracking-widest text-primary transition-colors cursor-pointer"
+                    >
+                      <span>Explorar Fotos</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* CTA Banner bottom */}
+        <div className="mt-40 p-12 md:p-16 rounded-[3rem] bg-linear-to-br from-primary/5 to-transparent border border-primary/10 flex flex-col md:flex-row items-center justify-between gap-10">
+          <div className="text-center md:text-left">
+            <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight mb-2 text-white">Prefere apoiar nossas programações?</h3>
+            <p className="text-white/40 text-sm max-w-xl font-medium">
+              O Terno Estrela Guia depende de apoios solidários espontâneos para manter as fardas bem cuidadas, organizar os mastros de santos e alimentar toda a comunidade nos dias festivos.
+            </p>
+          </div>
+          <button 
+            onClick={() => {
+              const donateBtn = document.getElementById("floating-donation-btn");
+              if (donateBtn) donateBtn.click();
+            }}
+            className="bg-primary hover:bg-orange-600 text-black px-10 py-5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/10 hover:shadow-primary/30 shrink-0"
+          >
+            Quero Contribuir
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// --- Reusable Global Lightbox Modal ---
+const LightboxModal = ({ 
+  selectedGalleryId, 
+  onClose 
+}: { 
+  selectedGalleryId: number | null; 
+  onClose: () => void;
+}) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Whenever selectedGalleryId changes, reset image index
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [selectedGalleryId]);
+
+  if (selectedGalleryId === null) return null;
+
+  const activeGallery = galleries.find(g => g.id === selectedGalleryId);
+  if (!activeGallery) return null;
+
+  const handleDownload = async (imageUrl: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `estrela-guia-galeria-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      window.open(imageUrl, '_blank');
+    }
+  };
+
+  const nextImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setCurrentImageIndex((prev) => (prev + 1) % activeGallery.images.length);
+  };
+
+  const prevImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setCurrentImageIndex((prev) => (prev - 1 + activeGallery.images.length) % activeGallery.images.length);
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[160] bg-black/98 md:backdrop-blur-3xl flex items-center justify-center"
+        onClick={onClose}
+      >
+        <div className="absolute top-6 left-6 lg:top-10 lg:left-10 z-20 bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/5 max-w-xs md:max-w-md">
+          <span className="text-primary text-[10px] font-black uppercase tracking-[0.4em] mb-1 block">{activeGallery.date}</span>
+          <h2 className="text-lg lg:text-2xl font-black text-white uppercase tracking-tighter truncate">{activeGallery.title}</h2>
+          <div className="flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1">
+            <MapPin className="w-3 h-3 text-primary" /> {activeGallery.location}
+          </div>
+        </div>
+
+        <div className="absolute top-6 right-6 lg:top-10 lg:right-10 z-20 flex gap-3">
+          <motion.button
+            whileHover={{ scale: 1.1, backgroundColor: "rgba(255,165,0,0.2)" }}
+            whileActive={{ scale: 0.9 }}
+            className="p-4 border border-white/10 rounded-full text-white bg-black/40 backdrop-blur-md transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDownload(activeGallery.images[currentImageIndex]);
+            }}
+            title="Download Imagem"
+          >
+            <Download className="w-5 h-5 lg:w-6 lg:h-6" />
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.1)" }}
+            whileActive={{ scale: 0.9 }}
+            className="p-4 border border-white/10 rounded-full text-white bg-black/40 backdrop-blur-md transition-colors"
+            onClick={onClose}
+            title="Fechar"
+          >
+            <X className="w-5 h-5 lg:w-6 lg:h-6" />
+          </motion.button>
+        </div>
+        
+        {/* Main interactive area */}
+        <div className="relative w-full h-full flex items-center justify-center">
+          <button 
+            onClick={prevImage}
+            className="absolute left-4 lg:left-8 p-4 text-white hover:text-primary transition-all z-35 bg-black/20 hover:bg-black/40 rounded-full backdrop-blur-sm"
+          >
+            <ChevronRight className="w-6 h-6 lg:w-12 lg:h-12 rotate-180" />
+          </button>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentImageIndex}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              transition={{ duration: 0.3 }}
+              className="w-full h-full flex items-center justify-center p-4 lg:p-12"
+            >
+              <img
+                src={activeGallery.images[currentImageIndex]}
+                alt={`Foto ${currentImageIndex + 1}`}
+                className="max-w-full max-h-[75vh] md:max-h-[85vh] object-contain shadow-[0_0_100px_rgba(0,0,0,0.8)] rounded-lg"
+                referrerPolicy="no-referrer"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </motion.div>
+          </AnimatePresence>
+
+          <button 
+            onClick={nextImage}
+            className="absolute right-4 lg:right-8 p-4 text-white hover:text-primary transition-all z-35 bg-black/20 hover:bg-black/40 rounded-full backdrop-blur-sm"
+          >
+            <ChevronRight className="w-6 h-6 lg:w-12 lg:h-12" />
+          </button>
+        </div>
+
+        {/* Pagination overlay */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-6 z-20 bg-black/50 backdrop-blur-xl px-6 py-3 rounded-full border border-white/5">
+          <div className="flex gap-1.5">
+            {activeGallery.images.map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentImageIndex(i);
+                }}
+                className={`h-0.5 transition-all duration-500 rounded-full ${
+                  i === currentImageIndex 
+                    ? "w-6 bg-primary shadow-[0_0_10px_rgba(255,165,0,0.5)]" 
+                    : "w-1.5 bg-white/20 hover:bg-white/40"
+                }`}
+              />
+            ))}
+          </div>
+          <div className="w-px h-3 bg-white/10" />
+          <div className="text-white/40 font-mono text-[10px] uppercase tracking-widest">
+            {currentImageIndex + 1} / {activeGallery.images.length}
+          </div>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
 // --- Main Page ---
 
 export default function EstrelaGuiaSite() {
@@ -1589,7 +1886,8 @@ export default function EstrelaGuiaSite() {
   const [isDonationOpen, setIsDonationOpen] = useState(false);
   const [isImpactReportOpen, setIsImpactReportOpen] = useState(false);
   const [activePdf, setActivePdf] = useState<{ url: string; title: string } | null>(null);
-  const [currentView, setCurrentView] = useState<"home" | "transparency">("home");
+  const [currentView, setCurrentView] = useState<"home" | "transparency" | "shows">("home");
+  const [selectedGalleryId, setSelectedGalleryId] = useState<number | null>(null);
 
   const openPdf = (url: string, title: string) => {
     setActivePdf({ url, title });
@@ -1603,10 +1901,17 @@ export default function EstrelaGuiaSite() {
   return (
     <div className="bg-black min-h-screen selection:bg-primary selection:text-black">
       <TopBar />
-      <Navbar onOpenDonation={() => setIsDonationOpen(true)} />
+      <Navbar 
+        currentView={currentView} 
+        onChangeView={(view) => {
+          setCurrentView(view);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }} 
+        onOpenDonation={() => setIsDonationOpen(true)} 
+      />
       <main>
         <AnimatePresence mode="wait">
-          {currentView === "home" ? (
+          {currentView === "home" && (
             <motion.div
               key="home"
               initial={{ opacity: 0 }}
@@ -1619,15 +1924,21 @@ export default function EstrelaGuiaSite() {
               <CounterSection />
               <ProjectsSection />
               <VideoSection />
-              <Gallery />
+              <Gallery onOpenGallery={(id) => setSelectedGalleryId(id)} />
               <Agenda />
               <Interactivity onOpenComments={() => setIsCommentsOpen(true)} />
               <TeamSection />
               <ManagementRecords />
               <CTA />
             </motion.div>
-          ) : (
+          )}
+
+          {currentView === "transparency" && (
             <TransparencyPortal key="transparency" onBack={() => setCurrentView("home")} onViewPdf={openPdf} />
+          )}
+
+          {currentView === "shows" && (
+            <ShowsEventosPage key="shows" onBack={() => setCurrentView("home")} onOpenGallery={(id) => setSelectedGalleryId(id)} />
           )}
         </AnimatePresence>
       </main>
@@ -1644,6 +1955,10 @@ export default function EstrelaGuiaSite() {
         onClose={() => setActivePdf(null)} 
         url={activePdf?.url || ""} 
         title={activePdf?.title || ""} 
+      />
+      <LightboxModal 
+        selectedGalleryId={selectedGalleryId} 
+        onClose={() => setSelectedGalleryId(null)} 
       />
     </div>
   );
