@@ -1132,7 +1132,7 @@ const Gallery = ({ onOpenGallery }: { onOpenGallery: (id: number) => void }) => 
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
+    visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } }
   };
 
   return (
@@ -1146,8 +1146,8 @@ const Gallery = ({ onOpenGallery }: { onOpenGallery: (id: number) => void }) => 
               <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Álbuns de Eventos</h2>
             </div>
           </div>
-          <p className="text-white/30 text-sm max-w-sm font-medium leading-relaxed">
-            Cada miniatura abre uma galeria completa. Explore nossa história através das lentes da comunidade.
+          <p className="text-white/40 text-sm max-w-sm font-medium leading-relaxed">
+            Cada miniatura abre uma galeria de fotos completa. Toque para explorar nossa história através das lentes da comunidade.
           </p>
         </div>
         
@@ -1155,60 +1155,61 @@ const Gallery = ({ onOpenGallery }: { onOpenGallery: (id: number) => void }) => 
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true }}
-          className="flex flex-col lg:flex-row gap-6 h-auto lg:h-[650px]"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
         >
           {galleries.map((gallery) => (
             <motion.div 
               key={gallery.id}
               variants={itemVariants}
-              whileHover={{ flex: 1.8 }}
-              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              whileHover={{ y: -6 }}
               onClick={() => onOpenGallery(gallery.id)}
-              className="relative overflow-hidden rounded-[3rem] border border-white/10 flex-1 h-[400px] lg:h-full cursor-pointer group shadow-2xl bg-black"
+              className="relative overflow-hidden rounded-[2.5rem] border border-white/5 bg-[#0a0a0a] cursor-pointer group shadow-2xl transition-all duration-300 flex flex-col h-full"
             >
-              <motion.img 
-                src={gallery.cover} 
-                alt={gallery.title} 
-                className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 group-hover:brightness-90 transition-all duration-700"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-black/20" />
-              
-              {/* Labels */}
-              <div className="absolute bottom-10 left-10 right-10">
-                <div className="overflow-hidden">
-                  <motion.div
-                    initial={{ y: 50, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
-                    className="space-y-1"
-                  >
-                    <span className="text-primary text-[10px] font-black uppercase tracking-widest bg-black/40 backdrop-blur-sm px-4 py-1.5 rounded-full inline-block mb-3 border border-primary/20">
-                      {gallery.date}
-                    </span>
-                    <h3 className="text-2xl font-black text-white uppercase leading-none tracking-tight group-hover:text-primary transition-colors">
-                      {gallery.title}
-                    </h3>
-                    <div className="flex items-center gap-2 text-white/40 text-xs font-bold uppercase tracking-widest mt-2 overflow-hidden">
-                      <MapPin className="w-3 h-3 text-primary shrink-0" /> 
-                      <span className="truncate">{gallery.location}</span>
-                    </div>
-                  </motion.div>
+              {/* Image Container with high contrast hover effects */}
+              <div className="relative aspect-[16/10] w-full overflow-hidden">
+                <img 
+                  src={gallery.cover} 
+                  alt={gallery.title} 
+                  className="w-full h-full object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-95 group-hover:scale-105 transition-all duration-750"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/10" />
+                
+                {/* Date Tag Overlay */}
+                <span className="absolute top-4 left-4 bg-black/70 backdrop-blur-md text-primary text-[9px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full border border-white/5 shadow-md">
+                  {gallery.date}
+                </span>
+
+                {/* Explore overlay on hover */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <span className="bg-primary hover:bg-orange-600 text-black text-[10px] font-black uppercase tracking-widest px-4.5 py-2.5 rounded-full shadow-xl flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                    Ver Fotos <Share2 className="w-3.5 h-3.5 rotate-45" />
+                  </span>
                 </div>
               </div>
 
-              {/* Hover Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div className="w-16 h-16 rounded-full bg-primary/20 backdrop-blur-xl border border-primary/30 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                  <Share2 className="w-6 h-6 rotate-45" />
+              {/* Informative Content Box under the image */}
+              <div className="p-6 md:p-8 flex flex-col justify-between flex-1 space-y-4">
+                <div className="space-y-2.5">
+                  <h3 className="text-lg md:text-xl font-black text-white uppercase tracking-tight group-hover:text-primary transition-colors line-clamp-1 leading-tight">
+                    {gallery.title}
+                  </h3>
+                  
+                  <p className="text-white/40 text-xs md:text-sm font-medium leading-relaxed line-clamp-3">
+                    {gallery.description}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 text-white/30 text-[10px] font-bold uppercase tracking-widest pt-4 border-t border-white/5">
+                  <MapPin className="w-3.5 h-3.5 text-primary shrink-0" /> 
+                  <span className="truncate">{gallery.location}</span>
                 </div>
               </div>
             </motion.div>
           ))}
         </motion.div>
       </div>
-
-
     </section>
   );
 };
