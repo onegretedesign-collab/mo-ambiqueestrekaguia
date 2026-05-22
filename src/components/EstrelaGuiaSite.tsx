@@ -1650,22 +1650,32 @@ const ShowsEventosPage = ({
                 {/* Photo area */}
                 <div className="w-full lg:w-1/2 group">
                   <div 
-                    onClick={() => onOpenGallery(event.galleryId)}
-                    className="relative overflow-hidden aspect-[4/3] rounded-[2.5rem] border border-white/10 bg-black cursor-pointer shadow-3xl group"
+                    onClick={() => {
+                      if (event.id === 2) {
+                        onOpenGallery(event.galleryId);
+                      }
+                    }}
+                    className={`relative overflow-hidden aspect-[4/3] rounded-[2.5rem] border border-white/10 bg-black shadow-3xl select-none ${event.id === 2 ? "cursor-pointer group" : "cursor-default"}`}
                   >
                     <img 
                       src={event.cover} 
                       alt={event.title}
-                      className="w-full h-full object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-95 group-hover:scale-105 transition-all duration-700" 
+                      className={`w-full h-full object-cover grayscale brightness-75 transition-all duration-700 ${event.id === 2 ? "group-hover:grayscale-0 group-hover:brightness-95 group-hover:scale-105" : ""}`} 
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/10 to-transparent opacity-60 group-hover:opacity-30 transition-opacity duration-300" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/10 to-transparent opacity-60" />
                     
                     {/* Pulsing visual helper */}
-                    <div className="absolute top-6 right-6 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-widest text-[#FFA500]/90 flex items-center gap-2 group-hover:bg-primary group-hover:text-black transition-colors">
-                      <div className="w-2 h-2 rounded-full bg-[#FFA500] animate-pulse group-hover:bg-black" />
-                      Ver Galeria Completa
-                    </div>
+                    {event.id === 2 ? (
+                      <div className="absolute top-6 right-6 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-widest text-[#FFA500]/90 flex items-center gap-2 group-hover:bg-primary group-hover:text-black transition-colors">
+                        <div className="w-2 h-2 rounded-full bg-[#FFA500] animate-pulse group-hover:bg-black" />
+                        Ver Galeria Completa
+                      </div>
+                    ) : (
+                      <div className="absolute top-6 right-6 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                        Fotos em breve
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1681,7 +1691,7 @@ const ShowsEventosPage = ({
                     </span>
                   </div>
 
-                  <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-tight text-white group-hover:text-primary transition-colors">
+                  <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-tight text-white transition-colors">
                     {event.title}
                   </h2>
 
@@ -1690,13 +1700,19 @@ const ShowsEventosPage = ({
                   </p>
 
                   <div className="pt-4">
-                    <button 
-                      onClick={() => onOpenGallery(event.galleryId)}
-                      className="inline-flex items-center gap-3 bg-white/5 border border-white/10 hover:bg-primary hover:text-black hover:border-transparent px-8 py-4 rounded-full text-xs font-black uppercase tracking-widest text-primary transition-colors cursor-pointer"
-                    >
-                      <span>Explorar Fotos</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
+                    {event.id === 2 ? (
+                      <button 
+                        onClick={() => onOpenGallery(event.galleryId)}
+                        className="inline-flex items-center gap-3 bg-white/5 border border-white/10 hover:bg-primary hover:text-black hover:border-transparent px-8 py-4 rounded-full text-xs font-black uppercase tracking-widest text-primary transition-colors cursor-pointer"
+                      >
+                        <span>Explorar Fotos</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <div className="inline-flex items-center gap-2.5 text-white/30 text-xs font-bold uppercase tracking-widest px-6 py-3 border border-white/5 rounded-full bg-white/[0.01]">
+                        Novidade e fotos em breve
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
