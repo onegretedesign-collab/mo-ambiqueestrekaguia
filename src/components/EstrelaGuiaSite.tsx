@@ -1656,7 +1656,13 @@ const ShowsEventosPage = ({
                 className={`flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-12 lg:gap-20 items-center`}
               >
                 {/* Photo area */}
-                <div className="w-full lg:w-1/2 group">
+                <motion.div 
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                  className="w-full lg:w-1/2 group"
+                >
                   <div 
                     onClick={() => {
                       if (event.id === 2) {
@@ -1685,10 +1691,16 @@ const ShowsEventosPage = ({
                       </div>
                     )}
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Text area */}
-                <div className="w-full lg:w-1/2 flex flex-col justify-center space-y-6">
+                <motion.div 
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+                  className="w-full lg:w-1/2 flex flex-col justify-center space-y-6"
+                >
                   <div className="flex items-center gap-3">
                     <span className="text-primary text-[10px] font-black uppercase tracking-[0.2em] bg-primary/10 border border-primary/20 px-4 py-1.5 rounded-full inline-block">
                       {event.date}
@@ -1722,7 +1734,7 @@ const ShowsEventosPage = ({
                       </div>
                     )}
                   </div>
-                </div>
+                </motion.div>
               </div>
             );
           })}
