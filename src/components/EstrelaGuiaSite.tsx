@@ -1615,6 +1615,7 @@ const ShowsEventosPage = ({
 }: { 
   onBack: () => void; 
   onOpenGallery: (id: number) => void;
+  key?: string;
 }) => {
   return (
     <motion.div 
@@ -1892,7 +1893,7 @@ const LightboxModal = ({
             >
               {isVideoUrl(activeGallery.images[currentImageIndex]) ? (
                 <div 
-                  className="relative w-full max-w-4xl aspect-video rounded-3xl overflow-hidden border border-white/10 bg-black shadow-[0_0_100px_rgba(255,165,0,0.15)] flex items-center justify-center"
+                  className="relative w-[min(90vw,360px)] md:w-[min(85vw,420px)] aspect-[9/16] rounded-3xl overflow-hidden border border-white/10 bg-black shadow-[0_0_100px_rgba(255,165,0,0.2)] flex items-center justify-center"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <iframe
