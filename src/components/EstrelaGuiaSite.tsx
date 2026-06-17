@@ -17,7 +17,9 @@ import {
   FileText,
   X,
   Menu,
-  Copy
+  Copy,
+  Video,
+  ExternalLink
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { subscribeToComments, addComment, type Comment } from "../services/commentService";
@@ -1119,7 +1121,12 @@ const galleries = [
       "https://i.postimg.cc/XJCdncH7/3075998a-3aae-4468-9018-de160d328055.jpg",
       "https://i.postimg.cc/C1qkwHPK/466e5d6c-ea15-4772-8d2b-66c5ac31e1b4.jpg",
       "https://i.postimg.cc/63vnBLj3/c6d95a5d-24fe-47ef-a64e-c311c108c87e.jpg",
-      "https://i.postimg.cc/3Rvm3CSN/ff61ddc2-b5eb-482b-9248-b8ce3d89999a.jpg"
+      "https://i.postimg.cc/3Rvm3CSN/ff61ddc2-b5eb-482b-9248-b8ce3d89999a.jpg",
+      "https://drive.google.com/file/d/1fb0XTgYjm6Q8lwbk_TnTfBR6SeUeodtq/view?usp=sharing",
+      "https://drive.google.com/file/d/1RGESiFfQyjzIbPecuAF_mpA68UruO3g0/view?usp=sharing",
+      "https://drive.google.com/file/d/14DVFafrB9xmJuCHDZciQrZ6ziHa1djPu/view?usp=sharing",
+      "https://drive.google.com/file/d/15gvlxD_yTIt-4_N2Uyn3fX9T8pgBlQOW/view?usp=sharing",
+      "https://drive.google.com/file/d/1HrFus24gjej45p0Yd2DO1nEQuXokJg74/view?usp=sharing"
     ]
   }
 ];
@@ -1744,6 +1751,18 @@ const ShowsEventosPage = ({
 };
 
 // --- Reusable Global Lightbox Modal ---
+const isVideoUrl = (url: string) => {
+  return url.includes("drive.google.com") || url.endsWith(".mp4") || url.includes("video");
+};
+
+const getGoogleDriveEmbedUrl = (url: string) => {
+  const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    return `https://drive.google.com/file/d/${match[1]}/preview`;
+  }
+  return url;
+};
+
 const LightboxModal = ({ 
   selectedGalleryId, 
   onClose 
@@ -1802,9 +1821,21 @@ const LightboxModal = ({
         <div className="absolute top-6 left-6 lg:top-10 lg:left-10 z-20 bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/5 max-w-xs md:max-w-md">
           <span className="text-primary text-[10px] font-black uppercase tracking-[0.4em] mb-1 block">{activeGallery.date}</span>
           <h2 className="text-lg lg:text-2xl font-black text-white uppercase tracking-tighter truncate">{activeGallery.title}</h2>
-          <div className="flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1">
+          <div className="flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1 mb-2">
             <MapPin className="w-3 h-3 text-primary" /> {activeGallery.location}
           </div>
+          {isVideoUrl(activeGallery.images[currentImageIndex]) ? (
+            <span className="bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+              <Video className="w-3 h-3 shrink-0" /> Vídeo do Evento
+            </span>
+          ) : (
+            <span className="bg-white/10 text-white/70 border border-white/5 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+              <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" fillRule="evenodd" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Foto do Evento
+            </span>
+          )}
         </div>
 
         <div className="absolute top-6 right-6 lg:top-10 lg:right-10 z-20 flex gap-3">
@@ -1814,11 +1845,20 @@ const LightboxModal = ({
             className="p-4 border border-white/10 rounded-full text-white bg-black/40 backdrop-blur-md transition-colors"
             onClick={(e) => {
               e.stopPropagation();
-              handleDownload(activeGallery.images[currentImageIndex]);
+              const url = activeGallery.images[currentImageIndex];
+              if (isVideoUrl(url)) {
+                window.open(url, '_blank');
+              } else {
+                handleDownload(url);
+              }
             }}
-            title="Download Imagem"
+            title={isVideoUrl(activeGallery.images[currentImageIndex]) ? "Abrir no Google Drive" : "Download Imagem"}
           >
-            <Download className="w-5 h-5 lg:w-6 lg:h-6" />
+            {isVideoUrl(activeGallery.images[currentImageIndex]) ? (
+              <ExternalLink className="w-5 h-5 lg:w-6 lg:h-6" />
+            ) : (
+              <Download className="w-5 h-5 lg:w-6 lg:h-6" />
+            )}
           </motion.button>
 
           <motion.button
@@ -1850,13 +1890,27 @@ const LightboxModal = ({
               transition={{ duration: 0.3 }}
               className="w-full h-full flex items-center justify-center p-4 lg:p-12"
             >
-              <img
-                src={activeGallery.images[currentImageIndex]}
-                alt={`Foto ${currentImageIndex + 1}`}
-                className="max-w-full max-h-[75vh] md:max-h-[85vh] object-contain shadow-[0_0_100px_rgba(0,0,0,0.8)] rounded-lg"
-                referrerPolicy="no-referrer"
-                onClick={(e) => e.stopPropagation()}
-              />
+              {isVideoUrl(activeGallery.images[currentImageIndex]) ? (
+                <div 
+                  className="relative w-full max-w-4xl aspect-video rounded-3xl overflow-hidden border border-white/10 bg-black shadow-[0_0_100px_rgba(255,165,0,0.15)] flex items-center justify-center"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <iframe
+                    src={getGoogleDriveEmbedUrl(activeGallery.images[currentImageIndex])}
+                    className="w-full h-full border-0 absolute inset-0"
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                  />
+                </div>
+              ) : (
+                <img
+                  src={activeGallery.images[currentImageIndex]}
+                  alt={`Foto ${currentImageIndex + 1}`}
+                  className="max-w-full max-h-[75vh] md:max-h-[85vh] object-contain shadow-[0_0_100px_rgba(0,0,0,0.8)] rounded-lg animate-fade-in"
+                  referrerPolicy="no-referrer"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              )}
             </motion.div>
           </AnimatePresence>
 
@@ -1878,10 +1932,10 @@ const LightboxModal = ({
                   e.stopPropagation();
                   setCurrentImageIndex(i);
                 }}
-                className={`h-0.5 transition-all duration-500 rounded-full ${
+                className={`h-1 transition-all duration-500 rounded-full ${
                   i === currentImageIndex 
                     ? "w-6 bg-primary shadow-[0_0_10px_rgba(255,165,0,0.5)]" 
-                    : "w-1.5 bg-white/20 hover:bg-white/40"
+                    : "w-2 bg-white/20 hover:bg-white/40"
                 }`}
               />
             ))}
