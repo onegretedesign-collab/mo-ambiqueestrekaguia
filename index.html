@@ -10,56 +10,51 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Script de Acessibilidade Modular (Botão Flutuante) -->
+    <!-- Script de Acessibilidade Modular (Botões no Cabeçalho) -->
     <script>
       (function () {
         // 1. Injetar tag <style> com CSS isolado (prefixo acc-btn-)
         const style = document.createElement("style");
         style.innerHTML = `
-          .acc-btn-container {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 999999;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            direction: ltr;
-            user-select: none;
-          }
           .acc-btn-trigger {
-            width: 56px;
-            height: 56px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
-            background-color: #f59e0b; /* Amarelo ouro do Estrela Guia */
-            color: #ffffff;
-            border: 3px solid #ffffff;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            background-color: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             outline: none;
+            flex-shrink: 0;
           }
           .acc-btn-trigger:hover {
-            transform: scale(1.08);
-            background-color: #d97706;
-            box-shadow: 0 6px 24px rgba(245, 158, 11, 0.5);
+            transform: scale(1.05);
+            background-color: #f59e0b; /* Amarelo ouro */
+            color: #000000;
+            border-color: #f59e0b;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
           }
           .acc-btn-trigger:focus-visible {
-            outline: 3px solid #f59e0b;
-            outline-offset: 3px;
+            outline: 2px solid #f59e0b;
+            outline-offset: 2px;
           }
           .acc-btn-trigger svg {
-            width: 32px;
-            height: 32px;
+            width: 20px;
+            height: 20px;
             fill: none;
             stroke: currentColor;
-            stroke-width: 2;
+            stroke-width: 2.2;
           }
           .acc-btn-menu {
-            position: absolute;
-            bottom: 72px;
-            right: 0;
+            position: fixed;
+            top: 86px;
+            right: 24px;
+            z-index: 999999;
             width: 320px;
             background: rgba(18, 18, 18, 0.96);
             backdrop-filter: blur(16px);
@@ -71,9 +66,12 @@
             display: none;
             flex-direction: column;
             gap: 18px;
-            transform: translateY(12px);
+            transform: translateY(-12px);
             opacity: 0;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            direction: ltr;
+            user-select: none;
           }
           .acc-btn-menu.acc-btn-open {
             display: flex;
@@ -190,97 +188,158 @@
           body.acc-btn-high-contrast-active video,
           body.acc-btn-high-contrast-active iframe,
           body.acc-btn-high-contrast-active [style*="background-image"],
-          body.acc-btn-high-contrast-active .acc-btn-container {
+          body.acc-btn-high-contrast-active .acc-btn-menu {
             filter: invert(1) hue-rotate(180deg) !important;
           }
 
-          /* Responsividade em telas pequenas */
-          @media (max-width: 480px) {
-            .acc-btn-container {
-              bottom: 16px;
-              right: 16px;
+          /* Ocultar botões conforme o tamanho da tela para evitar duplicação */
+          @media (min-width: 768px) {
+            .acc-btn-mobile-only {
+              display: none !important;
+            }
+          }
+          @media (max-width: 767px) {
+            .acc-btn-trigger:not(.acc-btn-mobile-only) {
+              display: none !important;
+            }
+            .acc-btn-mobile-only {
+              margin-right: 12px;
             }
             .acc-btn-menu {
-              width: 280px;
-              bottom: 68px;
+              width: 290px;
+              top: 76px;
+              right: 16px;
               padding: 16px;
             }
           }
         `;
         document.head.appendChild(style);
 
-        // 2. Criar e injetar elementos HTML no final de <body>
-        const container = document.createElement("div");
-        container.className = "acc-btn-container";
-        container.setAttribute("role", "region");
-        container.setAttribute("aria-label", "Menu de Acessibilidade");
+        // 2. Criar e injetar o menu suspenso/modal no final de <body>
+        const menu = document.createElement("div");
+        menu.className = "acc-btn-menu";
+        menu.id = "accBtnMenu";
+        menu.setAttribute("role", "dialog");
+        menu.setAttribute("aria-modal", "true");
+        menu.setAttribute("aria-labelledby", "accBtnTitle");
 
-        container.innerHTML = `
-          <button class="acc-btn-trigger" id="accBtnTrigger" aria-haspopup="true" aria-expanded="false" title="Menu de Acessibilidade">
-            <!-- Ícone de Acessibilidade (Pessoa Vitruviana / Símbolo Universal) -->
-            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="5" r="2"></circle>
-              <path d="M12 7v10M9 10h6M9 17l1.5-4h3l1.5 4"></path>
-            </svg>
-          </button>
+        menu.innerHTML = `
+          <div class="acc-btn-title" id="accBtnTitle">
+            <span>Acessibilidade</span>
+            <button class="acc-btn-close-menu" id="accBtnClose" title="Fechar Menu" aria-label="Fechar Menu">&times;</button>
+          </div>
           
-          <div class="acc-btn-menu" id="accBtnMenu" aria-labelledby="accBtnTrigger">
-            <div class="acc-btn-title">
-              <span>Acessibilidade</span>
-              <button class="acc-btn-close-menu" id="accBtnClose" title="Fechar Menu" aria-label="Fechar Menu">&times;</button>
-            </div>
-            
-            <div class="acc-btn-section">
-              <p class="acc-btn-subtitle">Tamanho do Texto</p>
-              <div class="acc-btn-row">
-                <button class="acc-btn-button" id="accBtnFontDec" title="Diminuir texto" aria-label="Diminuir texto">
-                  A-
-                </button>
-                <span class="acc-btn-button acc-btn-status-text" id="accBtnFontVal" aria-live="polite">100%</span>
-                <button class="acc-btn-button" id="accBtnFontInc" title="Aumentar texto" aria-label="Aumentar texto">
-                  A+
-                </button>
-              </div>
-            </div>
-            
-            <div class="acc-btn-section">
-              <p class="acc-btn-subtitle">Visualização</p>
-              <button class="acc-btn-button" id="accBtnContrast" title="Ativar alto contraste" aria-label="Ativar alto contraste">
-                <svg style="width: 16px; height: 16px; stroke-width: 2.5; margin-right: 4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M12 2v20a10 10 0 0 0 0-20z"></path>
-                </svg>
-                Alto Contraste
+          <div class="acc-btn-section">
+            <p class="acc-btn-subtitle">Tamanho do Texto</p>
+            <div class="acc-btn-row">
+              <button class="acc-btn-button" id="accBtnFontDec" title="Diminuir texto" aria-label="Diminuir texto">
+                A-
               </button>
-            </div>
-            
-            <div class="acc-btn-section" style="margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 14px;">
-              <button class="acc-btn-button acc-btn-reset-btn" id="accBtnReset" title="Resetar configurações" aria-label="Resetar configurações de acessibilidade">
-                Restaurar Padrão
+              <span class="acc-btn-button acc-btn-status-text" id="accBtnFontVal" aria-live="polite">100%</span>
+              <button class="acc-btn-button" id="accBtnFontInc" title="Aumentar texto" aria-label="Aumentar texto">
+                A+
               </button>
             </div>
           </div>
+          
+          <div class="acc-btn-section">
+            <p class="acc-btn-subtitle">Visualização</p>
+            <button class="acc-btn-button" id="accBtnContrast" title="Ativar alto contraste" aria-label="Ativar alto contraste">
+              <svg style="width: 16px; height: 16px; stroke-width: 2.5; margin-right: 4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M12 2v20a10 10 0 0 0 0-20z"></path>
+              </svg>
+              Alto Contraste
+            </button>
+          </div>
+          
+          <div class="acc-btn-section" style="margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 14px;">
+            <button class="acc-btn-button acc-btn-reset-btn" id="accBtnReset" title="Resetar configurações" aria-label="Resetar configurações de acessibilidade">
+              Restaurar Padrão
+            </button>
+          </div>
         `;
 
-        document.body.appendChild(container);
+        document.body.appendChild(menu);
 
-        // 3. Lógica JavaScript de Acessibilidade
-        const menu = container.querySelector("#accBtnMenu");
-        const trigger = container.querySelector("#accBtnTrigger");
-        const closeBtn = container.querySelector("#accBtnClose");
-        const fontInc = container.querySelector("#accBtnFontInc");
-        const fontDec = container.querySelector("#accBtnFontDec");
-        const fontVal = container.querySelector("#accBtnFontVal");
-        const contrastBtn = container.querySelector("#accBtnContrast");
-        const resetBtn = container.querySelector("#accBtnReset");
+        // Referências aos controles internos
+        const closeBtn = menu.querySelector("#accBtnClose");
+        const fontInc = menu.querySelector("#accBtnFontInc");
+        const fontDec = menu.querySelector("#accBtnFontDec");
+        const fontVal = menu.querySelector("#accBtnFontVal");
+        const contrastBtn = menu.querySelector("#accBtnContrast");
+        const resetBtn = menu.querySelector("#accBtnReset");
 
         // Estado inicial de acessibilidade
-        let currentFontScale = 100; // baseado em porcentagem
+        let currentFontScale = 100;
         let highContrastActive = false;
 
         // Limites de zoom
         const minScale = 85;
         const maxScale = 140;
         const scaleStep = 5;
+
+        // Função de detecção periódica para injetar os gatilhos no cabeçalho
+        function checkAndInjectTriggers() {
+          // Gatilho Desktop (ao lado do "Doar Agora" no cabeçalho)
+          const desktopNav = document.querySelector('.hidden.md\\:flex.items-center.gap-8');
+          if (desktopNav && !document.getElementById('accBtnDesktopTrigger')) {
+            const doacaoBtn = Array.from(desktopNav.querySelectorAll('button')).find(el => el.textContent.includes('Doar Agora'));
+            
+            const desktopTrigger = document.createElement("button");
+            desktopTrigger.className = "acc-btn-trigger";
+            desktopTrigger.id = "accBtnDesktopTrigger";
+            desktopTrigger.setAttribute("aria-haspopup", "true");
+            desktopTrigger.setAttribute("aria-expanded", "false");
+            desktopTrigger.setAttribute("title", "Acessibilidade");
+            desktopTrigger.setAttribute("aria-label", "Menu de Acessibilidade");
+            desktopTrigger.innerHTML = `
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="5" r="2"></circle>
+                <path d="M12 7v10M9 10h6M9 17l1.5-4h3l1.5 4"></path>
+              </svg>
+            `;
+            desktopTrigger.addEventListener("click", function (e) {
+              e.stopPropagation();
+              toggleMenu(desktopTrigger);
+            });
+
+            if (doacaoBtn) {
+              desktopNav.insertBefore(desktopTrigger, doacaoBtn);
+            } else {
+              desktopNav.appendChild(desktopTrigger);
+            }
+          }
+
+          // Gatilho Mobile (ao lado do botão do menu hambúrguer)
+          const mobileNav = document.querySelector('.max-w-7xl.mx-auto.px-6.h-20.flex.items-center.justify-between');
+          if (mobileNav && !document.getElementById('accBtnMobileTrigger')) {
+            const menuBtn = mobileNav.querySelector('button.md\\:hidden');
+            if (menuBtn) {
+              const mobileTrigger = document.createElement("button");
+              mobileTrigger.className = "acc-btn-trigger acc-btn-mobile-only";
+              mobileTrigger.id = "accBtnMobileTrigger";
+              mobileTrigger.setAttribute("aria-haspopup", "true");
+              mobileTrigger.setAttribute("aria-expanded", "false");
+              mobileTrigger.setAttribute("title", "Acessibilidade");
+              mobileTrigger.setAttribute("aria-label", "Menu de Acessibilidade");
+              mobileTrigger.innerHTML = `
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="5" r="2"></circle>
+                  <path d="M12 7v10M9 10h6M9 17l1.5-4h3l1.5 4"></path>
+                </svg>
+              `;
+              mobileTrigger.addEventListener("click", function (e) {
+                e.stopPropagation();
+                toggleMenu(mobileTrigger);
+              });
+              mobileNav.insertBefore(mobileTrigger, menuBtn);
+            }
+          }
+        }
+
+        // Rodar a injeção periodicamente devido ao mounting dinâmico do React
+        setInterval(checkAndInjectTriggers, 800);
+        checkAndInjectTriggers();
 
         // Carregar configurações anteriores do localStorage
         try {
@@ -296,27 +355,35 @@
             updateContrast();
           }
         } catch (e) {
-          console.warn("Storage de configurações não suportado pelo navegador.");
+          console.warn("Navegador não possui recursos de storage ativados.");
         }
 
         // Toggle menu dropdown
-        function toggleMenu() {
+        function toggleMenu(activeTrigger) {
           const isOpen = menu.classList.toggle("acc-btn-open");
-          trigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+          
+          const desktopTrigger = document.getElementById("accBtnDesktopTrigger");
+          const mobileTrigger = document.getElementById("accBtnMobileTrigger");
+          if (desktopTrigger) desktopTrigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+          if (mobileTrigger) mobileTrigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+
           if (isOpen) {
             closeBtn.focus();
-          } else {
-            trigger.focus();
+          } else if (activeTrigger) {
+            activeTrigger.focus();
           }
         }
 
         // Fechar menu
         function closeMenu() {
           menu.classList.remove("acc-btn-open");
-          trigger.setAttribute("aria-expanded", "false");
+          const desktopTrigger = document.getElementById("accBtnDesktopTrigger");
+          const mobileTrigger = document.getElementById("accBtnMobileTrigger");
+          if (desktopTrigger) desktopTrigger.setAttribute("aria-expanded", "false");
+          if (mobileTrigger) mobileTrigger.setAttribute("aria-expanded", "false");
         }
 
-        // Atualizar escala da fonte no HTML do site
+        // Atualizar escala da fonte no documento HTML
         function updateFontScale() {
           document.documentElement.style.fontSize = `${currentFontScale}%`;
           fontVal.textContent = `${currentFontScale}%`;
@@ -336,11 +403,6 @@
         }
 
         // Event Listeners
-        trigger.addEventListener("click", function (e) {
-          e.stopPropagation();
-          toggleMenu();
-        });
-
         closeBtn.addEventListener("click", function (e) {
           e.stopPropagation();
           closeMenu();
@@ -379,7 +441,9 @@
 
         // Fechar ao clicar fora
         document.addEventListener("click", function (e) {
-          if (!container.contains(e.target)) {
+          const dt = document.getElementById("accBtnDesktopTrigger");
+          const mt = document.getElementById("accBtnMobileTrigger");
+          if (!menu.contains(e.target) && (!dt || !dt.contains(e.target)) && (!mt || !mt.contains(e.target))) {
             closeMenu();
           }
         });
