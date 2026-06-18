@@ -430,7 +430,14 @@ const TopBar = () => {
         </div>
         <div className="flex gap-4">
           <a href="#" className="hover:text-primary transition-colors">Facebook</a>
-          <a href="#" className="hover:text-primary transition-colors">Instagram</a>
+          <a 
+            href="https://www.instagram.com/mocambique_estrela_guia?igsh=aDh6OTExamExb3hv" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="hover:text-primary transition-colors"
+          >
+            Instagram
+          </a>
           <a href="#" className="hover:text-primary transition-colors">Youtube</a>
         </div>
       </div>
@@ -1466,16 +1473,18 @@ const Footer = () => {
           <div className="space-y-6">
             <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Contatos</h4>
             <div className="flex flex-col gap-4">
-              <a href="#" className="flex items-center gap-3 text-white/60 hover:text-primary transition-colors">
-                <Globe className="w-5 h-5 text-primary" /> estrelaguia.org
-              </a>
-              <a href="#" className="flex items-center gap-3 text-white/60 hover:text-primary transition-colors">
-                <Instagram className="w-5 h-5 text-primary" /> @moçambiqueestrelaguia
+              <a 
+                href="https://www.instagram.com/mocambique_estrela_guia?igsh=aDh6OTExamExb3hv" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center gap-3 text-white/60 hover:text-primary transition-colors"
+              >
+                <Instagram className="w-5 h-5 text-primary" /> Instagram
               </a>
               <a href="#" className="flex items-center gap-3 text-white/60 hover:text-primary transition-colors">
                 <MapPin className="w-5 h-5 text-primary" /> Rua do Dólar, 290 - Bairro São Jorge, Uberlândia-MG
               </a>
-              <a href="#" className="flex items-center gap-3 text-white/60 hover:text-primary transition-colors">
+              <a href="mailto:contato@estrelaguia.org" className="flex items-center gap-3 text-white/60 hover:text-primary transition-colors">
                 <Mail className="w-5 h-5 text-primary" /> contato@estrelaguia.org
               </a>
             </div>

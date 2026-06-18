@@ -9,6 +9,389 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Script de Acessibilidade Modular (Botão Flutuante) -->
+    <script>
+      (function () {
+        // 1. Injetar tag <style> com CSS isolado (prefixo acc-btn-)
+        const style = document.createElement("style");
+        style.innerHTML = `
+          .acc-btn-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 999999;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            direction: ltr;
+            user-select: none;
+          }
+          .acc-btn-trigger {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background-color: #f59e0b; /* Amarelo ouro do Estrela Guia */
+            color: #ffffff;
+            border: 3px solid #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            outline: none;
+          }
+          .acc-btn-trigger:hover {
+            transform: scale(1.08);
+            background-color: #d97706;
+            box-shadow: 0 6px 24px rgba(245, 158, 11, 0.5);
+          }
+          .acc-btn-trigger:focus-visible {
+            outline: 3px solid #f59e0b;
+            outline-offset: 3px;
+          }
+          .acc-btn-trigger svg {
+            width: 32px;
+            height: 32px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+          }
+          .acc-btn-menu {
+            position: absolute;
+            bottom: 72px;
+            right: 0;
+            width: 320px;
+            background: rgba(18, 18, 18, 0.96);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            box-shadow: 0 10px 45px rgba(0, 0, 0, 0.6);
+            padding: 22px;
+            display: none;
+            flex-direction: column;
+            gap: 18px;
+            transform: translateY(12px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          }
+          .acc-btn-menu.acc-btn-open {
+            display: flex;
+            transform: translateY(0);
+            opacity: 1;
+          }
+          .acc-btn-title {
+            font-size: 13px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #f59e0b;
+            margin: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          }
+          .acc-btn-close-menu {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            font-size: 20px;
+            padding: 4px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s, transform 0.2s;
+          }
+          .acc-btn-close-menu:hover {
+            color: #ffffff;
+            transform: scale(1.1);
+          }
+          .acc-btn-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          }
+          .acc-btn-subtitle {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.5);
+            margin: 0;
+          }
+          .acc-btn-row {
+            display: flex;
+            gap: 8px;
+          }
+          .acc-btn-button {
+            flex: 1;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            outline: none;
+          }
+          .acc-btn-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.25);
+          }
+          .acc-btn-button:focus-visible {
+            outline: 2px solid #f59e0b;
+            outline-offset: -2px;
+          }
+          .acc-btn-button:active {
+            transform: scale(0.97);
+          }
+          .acc-btn-button-active {
+            background: #f59e0b !important;
+            color: #000000 !important;
+            border-color: #f59e0b !important;
+          }
+          .acc-btn-status-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 4px 8px;
+          }
+          .acc-btn-reset-btn {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #f87171;
+          }
+          .acc-btn-reset-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+          }
+
+          /* Modo Alto Contraste via Inversão Inteligente */
+          body.acc-btn-high-contrast-active {
+            filter: invert(1) hue-rotate(180deg) !important;
+            background-color: #000000 !important;
+          }
+          /* Preservar mídia e o próprio modal para não inverterem de volta */
+          body.acc-btn-high-contrast-active img,
+          body.acc-btn-high-contrast-active video,
+          body.acc-btn-high-contrast-active iframe,
+          body.acc-btn-high-contrast-active [style*="background-image"],
+          body.acc-btn-high-contrast-active .acc-btn-container {
+            filter: invert(1) hue-rotate(180deg) !important;
+          }
+
+          /* Responsividade em telas pequenas */
+          @media (max-width: 480px) {
+            .acc-btn-container {
+              bottom: 16px;
+              right: 16px;
+            }
+            .acc-btn-menu {
+              width: 280px;
+              bottom: 68px;
+              padding: 16px;
+            }
+          }
+        `;
+        document.head.appendChild(style);
+
+        // 2. Criar e injetar elementos HTML no final de <body>
+        const container = document.createElement("div");
+        container.className = "acc-btn-container";
+        container.setAttribute("role", "region");
+        container.setAttribute("aria-label", "Menu de Acessibilidade");
+
+        container.innerHTML = `
+          <button class="acc-btn-trigger" id="accBtnTrigger" aria-haspopup="true" aria-expanded="false" title="Menu de Acessibilidade">
+            <!-- Ícone de Acessibilidade (Pessoa Vitruviana / Símbolo Universal) -->
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="5" r="2"></circle>
+              <path d="M12 7v10M9 10h6M9 17l1.5-4h3l1.5 4"></path>
+            </svg>
+          </button>
+          
+          <div class="acc-btn-menu" id="accBtnMenu" aria-labelledby="accBtnTrigger">
+            <div class="acc-btn-title">
+              <span>Acessibilidade</span>
+              <button class="acc-btn-close-menu" id="accBtnClose" title="Fechar Menu" aria-label="Fechar Menu">&times;</button>
+            </div>
+            
+            <div class="acc-btn-section">
+              <p class="acc-btn-subtitle">Tamanho do Texto</p>
+              <div class="acc-btn-row">
+                <button class="acc-btn-button" id="accBtnFontDec" title="Diminuir texto" aria-label="Diminuir texto">
+                  A-
+                </button>
+                <span class="acc-btn-button acc-btn-status-text" id="accBtnFontVal" aria-live="polite">100%</span>
+                <button class="acc-btn-button" id="accBtnFontInc" title="Aumentar texto" aria-label="Aumentar texto">
+                  A+
+                </button>
+              </div>
+            </div>
+            
+            <div class="acc-btn-section">
+              <p class="acc-btn-subtitle">Visualização</p>
+              <button class="acc-btn-button" id="accBtnContrast" title="Ativar alto contraste" aria-label="Ativar alto contraste">
+                <svg style="width: 16px; height: 16px; stroke-width: 2.5; margin-right: 4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M12 2v20a10 10 0 0 0 0-20z"></path>
+                </svg>
+                Alto Contraste
+              </button>
+            </div>
+            
+            <div class="acc-btn-section" style="margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 14px;">
+              <button class="acc-btn-button acc-btn-reset-btn" id="accBtnReset" title="Resetar configurações" aria-label="Resetar configurações de acessibilidade">
+                Restaurar Padrão
+              </button>
+            </div>
+          </div>
+        `;
+
+        document.body.appendChild(container);
+
+        // 3. Lógica JavaScript de Acessibilidade
+        const menu = container.querySelector("#accBtnMenu");
+        const trigger = container.querySelector("#accBtnTrigger");
+        const closeBtn = container.querySelector("#accBtnClose");
+        const fontInc = container.querySelector("#accBtnFontInc");
+        const fontDec = container.querySelector("#accBtnFontDec");
+        const fontVal = container.querySelector("#accBtnFontVal");
+        const contrastBtn = container.querySelector("#accBtnContrast");
+        const resetBtn = container.querySelector("#accBtnReset");
+
+        // Estado inicial de acessibilidade
+        let currentFontScale = 100; // baseado em porcentagem
+        let highContrastActive = false;
+
+        // Limites de zoom
+        const minScale = 85;
+        const maxScale = 140;
+        const scaleStep = 5;
+
+        // Carregar configurações anteriores do localStorage
+        try {
+          const storedScale = localStorage.getItem("acc-font-scale");
+          const storedContrast = localStorage.getItem("acc-contrast-active");
+          
+          if (storedScale) {
+            currentFontScale = parseInt(storedScale, 10);
+            updateFontScale();
+          }
+          if (storedContrast === "true") {
+            highContrastActive = true;
+            updateContrast();
+          }
+        } catch (e) {
+          console.warn("Storage de configurações não suportado pelo navegador.");
+        }
+
+        // Toggle menu dropdown
+        function toggleMenu() {
+          const isOpen = menu.classList.toggle("acc-btn-open");
+          trigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+          if (isOpen) {
+            closeBtn.focus();
+          } else {
+            trigger.focus();
+          }
+        }
+
+        // Fechar menu
+        function closeMenu() {
+          menu.classList.remove("acc-btn-open");
+          trigger.setAttribute("aria-expanded", "false");
+        }
+
+        // Atualizar escala da fonte no HTML do site
+        function updateFontScale() {
+          document.documentElement.style.fontSize = `${currentFontScale}%`;
+          fontVal.textContent = `${currentFontScale}%`;
+          localStorage.setItem("acc-font-scale", currentFontScale);
+        }
+
+        // Atualizar modo Alto Contraste
+        function updateContrast() {
+          if (highContrastActive) {
+            document.body.classList.add("acc-btn-high-contrast-active");
+            contrastBtn.classList.add("acc-btn-button-active");
+          } else {
+            document.body.classList.remove("acc-btn-high-contrast-active");
+            contrastBtn.classList.remove("acc-btn-button-active");
+          }
+          localStorage.setItem("acc-contrast-active", highContrastActive);
+        }
+
+        // Event Listeners
+        trigger.addEventListener("click", function (e) {
+          e.stopPropagation();
+          toggleMenu();
+        });
+
+        closeBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          closeMenu();
+        });
+
+        fontInc.addEventListener("click", function (e) {
+          e.stopPropagation();
+          if (currentFontScale < maxScale) {
+            currentFontScale += scaleStep;
+            updateFontScale();
+          }
+        });
+
+        fontDec.addEventListener("click", function (e) {
+          e.stopPropagation();
+          if (currentFontScale > minScale) {
+            currentFontScale -= scaleStep;
+            updateFontScale();
+          }
+        });
+
+        contrastBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          highContrastActive = !highContrastActive;
+          updateContrast();
+        });
+
+        resetBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          currentFontScale = 100;
+          highContrastActive = false;
+          updateFontScale();
+          updateContrast();
+          closeMenu();
+        });
+
+        // Fechar ao clicar fora
+        document.addEventListener("click", function (e) {
+          if (!container.contains(e.target)) {
+            closeMenu();
+          }
+        });
+
+        // Fechar ao pressionar a tecla Escape (Boa prática WCAG)
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") {
+            closeMenu();
+          }
+        });
+      })();
+    </script>
   </body>
 </html>
 
