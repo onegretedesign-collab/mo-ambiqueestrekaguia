@@ -1133,7 +1133,8 @@ const galleries = [
       "https://drive.google.com/file/d/1RGESiFfQyjzIbPecuAF_mpA68UruO3g0/view?usp=sharing",
       "https://drive.google.com/file/d/14DVFafrB9xmJuCHDZciQrZ6ziHa1djPu/view?usp=sharing",
       "https://drive.google.com/file/d/15gvlxD_yTIt-4_N2Uyn3fX9T8pgBlQOW/view?usp=sharing",
-      "https://drive.google.com/file/d/1HrFus24gjej45p0Yd2DO1nEQuXokJg74/view?usp=sharing"
+      "https://drive.google.com/file/d/1HrFus24gjej45p0Yd2DO1nEQuXokJg74/view?usp=sharing",
+      "https://drive.google.com/file/d/1fFdYOU7k51sSlQ6s1QeyicwZdIfG0Eiy/view?usp=sharing"
     ]
   }
 ];
@@ -1777,6 +1778,10 @@ const isVideoUrl = (url: string) => {
   return url.includes("drive.google.com") || url.endsWith(".mp4") || url.includes("video");
 };
 
+const isHorizontalVideo = (url: string) => {
+  return url.includes("1fFdYOU7k51sSlQ6s1QeyicwZdIfG0Eiy") || url.includes("horizontal");
+};
+
 const getGoogleDriveEmbedUrl = (url: string) => {
   const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (match && match[1]) {
@@ -1914,7 +1919,11 @@ const LightboxModal = ({
             >
               {isVideoUrl(activeGallery.images[currentImageIndex]) ? (
                 <div 
-                  className="relative w-[min(90vw,360px)] md:w-[min(85vw,420px)] aspect-[9/16] rounded-3xl overflow-hidden border border-white/10 bg-black shadow-[0_0_100px_rgba(255,165,0,0.2)] flex items-center justify-center"
+                  className={
+                    isHorizontalVideo(activeGallery.images[currentImageIndex])
+                      ? "relative w-[min(90vw,800px)] md:w-[min(85vw,960px)] aspect-[16/9] rounded-3xl overflow-hidden border border-white/10 bg-black shadow-[0_0_100px_rgba(255,165,0,0.2)] flex items-center justify-center"
+                      : "relative w-[min(90vw,360px)] md:w-[min(85vw,420px)] aspect-[9/16] rounded-3xl overflow-hidden border border-white/10 bg-black shadow-[0_0_100px_rgba(255,165,0,0.2)] flex items-center justify-center"
+                  }
                   onClick={(e) => e.stopPropagation()}
                 >
                   <iframe
