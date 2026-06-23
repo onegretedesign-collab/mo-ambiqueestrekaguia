@@ -1143,7 +1143,12 @@ const galleries = [
       "https://drive.google.com/file/d/14DVFafrB9xmJuCHDZciQrZ6ziHa1djPu/view?usp=sharing",
       "https://drive.google.com/file/d/15gvlxD_yTIt-4_N2Uyn3fX9T8pgBlQOW/view?usp=sharing",
       "https://drive.google.com/file/d/1HrFus24gjej45p0Yd2DO1nEQuXokJg74/view?usp=sharing",
-      "https://drive.google.com/file/d/1fFdYOU7k51sSlQ6s1QeyicwZdIfG0Eiy/view?usp=sharing"
+      "https://drive.google.com/file/d/1fFdYOU7k51sSlQ6s1QeyicwZdIfG0Eiy/view?usp=sharing",
+      "https://drive.google.com/file/d/1EgHuTTvIF_KBdNyPsCRqpIY3kMWgubcg/view?usp=sharing",
+      "https://drive.google.com/file/d/1HEJrcS-3P2HCMT5Bshxgf91pOoKzMv-X/view?usp=sharing",
+      "https://drive.google.com/file/d/1AXgQv4zoMt-P95xEH9nb48pP2o6luquB/view?usp=sharing",
+      "https://drive.google.com/file/d/1aSVAubaZXvhY9I3H_YPVOW-RgL1Vq1Bv/view?usp=sharing",
+      "https://drive.google.com/file/d/1lncWWJ-Fcd17v7xAJmEz1Suwgj6ddn3G/view?usp=sharing"
     ]
   }
 ];
