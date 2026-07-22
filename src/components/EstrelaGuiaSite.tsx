@@ -1150,6 +1150,38 @@ const galleries = [
       "https://drive.google.com/file/d/1aSVAubaZXvhY9I3H_YPVOW-RgL1Vq1Bv/view?usp=sharing",
       "https://drive.google.com/file/d/1lncWWJ-Fcd17v7xAJmEz1Suwgj6ddn3G/view?usp=sharing"
     ]
+  },
+  {
+    id: 8,
+    title: "Fotos dos eventos realizados – Instrumento nº 977307",
+    date: "Instrumento nº 977307",
+    location: "Sede Moçambique Estrela Guia",
+    cover: "https://drive.google.com/thumbnail?id=1zCjw-1WNKZUeplKMDh435YmJEVT9GGLj&sz=w1000",
+    description: "Registros fotográficos das atividades culturais realizadas no âmbito do projeto, para comprovação da execução física e transparência das ações vinculadas ao Instrumento nº 977307.",
+    images: [
+      "https://drive.google.com/file/d/1zCjw-1WNKZUeplKMDh435YmJEVT9GGLj/view?usp=sharing",
+      "https://drive.google.com/file/d/1KFrODDZ34hjJJP3yKxFHF8IKnRgpw22l/view?usp=sharing",
+      "https://drive.google.com/file/d/1kDztWw3akTkAZnFK1QwCb5SxT_oGj9Y9/view?usp=sharing",
+      "https://drive.google.com/file/d/1R3hUwFFx3NBVLQODOasZCchGV7XI33R2/view?usp=sharing",
+      "https://drive.google.com/file/d/1JrbThumjJNfYwefc8hNKej-0OK6oc7Up/view?usp=sharing",
+      "https://drive.google.com/file/d/1ORByvc1ZEfdKVdpImjUgBXhJhWTCdMYg/view?usp=sharing",
+      "https://drive.google.com/file/d/1zOFf68v-HCzyUlFuYGN9p0oI53flIJE4/view?usp=sharing"
+    ]
+  },
+  {
+    id: 9,
+    title: "Pagode com Feijoada",
+    date: "Confraternização Cultural",
+    location: "Quartel Moçambique Estrela Guia - Rua do Dólar, 290 — São Jorge",
+    cover: "https://drive.google.com/thumbnail?id=19FyHebMAZby1r41fRaVMN37hGVd-txuU&sz=w1000",
+    description: "Tradicional Pagode com Feijoada no Quartel do Moçambique Estrela Guia. Encontro festivo de confraternização, gastronomia e samba com a comunidade, celebrando a cultura popular com muita música, alegria e união.",
+    images: [
+      "https://drive.google.com/file/d/19FyHebMAZby1r41fRaVMN37hGVd-txuU/view?usp=sharing",
+      "https://drive.google.com/file/d/1jVmURqlvog0fn8eZYAPNhcEWmWW0ftu2/view?usp=sharing",
+      "https://drive.google.com/file/d/1U8Pkm5YeSA_25_Z4KfcC2uP_OmHvTk6R/view?usp=sharing",
+      "https://drive.google.com/file/d/1Y2EEn8y_agLgj0dZbd4R-aa-9X5QFFeh/view?usp=sharing",
+      "https://drive.google.com/file/d/1scS9Mu9nhO4saJM-FhYBtaXh4UeFg99h/view?usp=sharing"
+    ]
   }
 ];
 
@@ -1577,7 +1609,8 @@ interface EventShow {
   location: string;
   cover: string;
   description: string;
-  galleryId: number;
+  galleryId?: number;
+  modalidade?: string;
 }
 
 const eventsData: EventShow[] = [
@@ -1630,6 +1663,26 @@ Chame a família, os amigos e venha festejar com a gente! 🌻🔥`,
     cover: "https://i.postimg.cc/BQ6s5pQ4/Whats-App-Image-2026-05-12-at-09-18-41-3.jpg",
     description: "Encontros semanais dedicados à transmissão da capoeira como expressão legítima de resistência física e cultural. Unindo técnicas corporais, canto coletivo e compasso instrumental (berimbau, pandeiro, atabaque), fortalecemos o vínculo social e identitário.",
     galleryId: 6
+  },
+  {
+    id: 4,
+    title: "Fotos dos eventos realizados – Instrumento nº 977307",
+    modalidade: "Execução do Projeto / Registro Fotográfico",
+    date: "Instrumento nº 977307",
+    location: "Sede Moçambique Estrela Guia",
+    cover: "https://drive.google.com/thumbnail?id=1zCjw-1WNKZUeplKMDh435YmJEVT9GGLj&sz=w1000",
+    description: "Registros fotográficos das atividades culturais realizadas no âmbito do projeto, para comprovação da execução física e transparência das ações vinculadas ao Instrumento nº 977307.",
+    galleryId: 8
+  },
+  {
+    id: 5,
+    title: "Pagode com Feijoada",
+    modalidade: "Confraternização / Gastronomia e Samba",
+    date: "Confraternização Cultural",
+    location: "Quartel Moçambique Estrela Guia — Rua do Dólar, 290, São Jorge",
+    cover: "https://drive.google.com/thumbnail?id=19FyHebMAZby1r41fRaVMN37hGVd-txuU&sz=w1000",
+    description: "Tradicional Pagode com Feijoada no Quartel do Moçambique Estrela Guia. Um encontro festivo e comunitário recheado de samba, gastronomia típica e celebração cultural, fortalecendo a união dos moradores e amigos do Terno.",
+    galleryId: 9
   }
 ];
 
@@ -1674,6 +1727,9 @@ const ShowsEventosPage = ({
         <div className="space-y-36">
           {eventsData.map((event, index) => {
             const isEven = index % 2 === 0;
+            const hasGallery = !!event.galleryId;
+            const targetGallery = hasGallery ? galleries.find(g => g.id === event.galleryId) : null;
+
             return (
               <div 
                 key={event.id}
@@ -1689,25 +1745,25 @@ const ShowsEventosPage = ({
                 >
                   <div 
                     onClick={() => {
-                      if (event.id === 2) {
+                      if (event.galleryId) {
                         onOpenGallery(event.galleryId);
                       }
                     }}
-                    className={`relative overflow-hidden aspect-[4/3] rounded-[2.5rem] border border-white/10 bg-black shadow-3xl select-none ${event.id === 2 ? "cursor-pointer group" : "cursor-default"}`}
+                    className={`relative overflow-hidden aspect-[4/3] rounded-[2.5rem] border border-white/10 bg-black shadow-3xl select-none ${hasGallery ? "cursor-pointer group" : "cursor-default"}`}
                   >
                     <img 
                       src={event.cover} 
                       alt={event.title}
-                      className={`w-full h-full object-cover grayscale brightness-75 transition-all duration-700 ${event.id === 2 ? "group-hover:grayscale-0 group-hover:brightness-95 group-hover:scale-105" : ""}`} 
+                      className={`w-full h-full object-cover grayscale brightness-75 transition-all duration-700 ${hasGallery ? "group-hover:grayscale-0 group-hover:brightness-95 group-hover:scale-105" : ""}`} 
                       referrerPolicy="no-referrer"
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black via-black/10 to-transparent opacity-60" />
                     
                     {/* Pulsing visual helper */}
-                    {event.id === 2 ? (
+                    {hasGallery ? (
                       <div className="absolute top-6 right-6 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-widest text-[#FFA500]/90 flex items-center gap-2 group-hover:bg-primary group-hover:text-black transition-colors">
                         <div className="w-2 h-2 rounded-full bg-[#FFA500] animate-pulse group-hover:bg-black" />
-                        Ver Galeria Completa
+                        Ver Galeria ({targetGallery?.images.length || 0})
                       </div>
                     ) : (
                       <div className="absolute top-6 right-6 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
@@ -1725,7 +1781,14 @@ const ShowsEventosPage = ({
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
                   className="w-full lg:w-1/2 flex flex-col justify-center space-y-6"
                 >
-                  <div className="flex items-center gap-3">
+                  {/* Category / Modalidade tags */}
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    {event.modalidade && (
+                      <span className="text-amber-400 bg-amber-500/10 border border-amber-500/30 text-[10px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                        {event.modalidade}
+                      </span>
+                    )}
                     <span className="text-primary text-[10px] font-black uppercase tracking-[0.2em] bg-primary/10 border border-primary/20 px-4 py-1.5 rounded-full inline-block">
                       {event.date}
                     </span>
@@ -1744,12 +1807,12 @@ const ShowsEventosPage = ({
                   </p>
 
                   <div className="pt-4">
-                    {event.id === 2 ? (
+                    {hasGallery && event.galleryId ? (
                       <button 
-                        onClick={() => onOpenGallery(event.galleryId)}
+                        onClick={() => onOpenGallery(event.galleryId!)}
                         className="inline-flex items-center gap-3 bg-white/5 border border-white/10 hover:bg-primary hover:text-black hover:border-transparent px-8 py-4 rounded-full text-xs font-black uppercase tracking-widest text-primary transition-colors cursor-pointer"
                       >
-                        <span>Explorar Fotos</span>
+                        <span>Explorar Registros ({targetGallery?.images.length || 0} Fotos/Mídias)</span>
                         <ChevronRight className="w-4 h-4" />
                       </button>
                     ) : (
