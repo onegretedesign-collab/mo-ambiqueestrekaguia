@@ -1947,18 +1947,18 @@ const LightboxModal = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[160] bg-black/95 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 md:p-8"
+        className="fixed inset-0 z-[160] bg-black/95 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6"
         onClick={onClose}
       >
         <div 
-          className="relative w-full max-w-5xl max-h-[95vh] bg-[#0d0d0d] border border-white/10 rounded-[2rem] shadow-2xl p-4 sm:p-6 md:p-8 flex flex-col justify-between space-y-4 overflow-hidden"
+          className="event-modal-container relative w-full max-w-4xl bg-[#0d0d0d] border border-white/10 rounded-3xl shadow-2xl p-4 sm:p-5 flex flex-col items-stretch justify-center gap-2.5 my-auto max-h-[94vh] overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* HEADER BAR - Directly above media */}
-          <div className="flex items-start justify-between gap-4 pb-4 border-b border-white/10">
-            <div className="flex-1 min-w-0">
+          {/* HEADER BAR - Compact title & details */}
+          <div className="flex items-center justify-between gap-3 pb-2 border-b border-white/10 shrink-0">
+            <div className="flex-1 min-w-0 pr-1">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="text-primary text-[10px] font-black uppercase tracking-[0.25em] bg-primary/10 border border-primary/20 px-3 py-1 rounded-full">
+                <span className="text-primary text-[10px] font-black uppercase tracking-[0.2em] bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-full">
                   {activeGallery.date}
                 </span>
                 <span className="text-white/50 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
@@ -1966,16 +1966,16 @@ const LightboxModal = ({
                   <span className="truncate">{activeGallery.location}</span>
                 </span>
                 {isVideo ? (
-                  <span className="bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                  <span className="bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                     <Video className="w-3 h-3 shrink-0" /> Vídeo
                   </span>
                 ) : (
-                  <span className="bg-white/10 text-white/70 border border-white/5 text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                  <span className="bg-white/10 text-white/70 border border-white/5 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                     Foto
                   </span>
                 )}
               </div>
-              <h2 className="text-lg sm:text-xl md:text-2xl font-black text-white uppercase tracking-tight truncate">
+              <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-tight truncate">
                 {activeGallery.title}
               </h2>
             </div>
@@ -1985,7 +1985,7 @@ const LightboxModal = ({
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="p-2.5 sm:p-3 border border-white/10 rounded-xl text-white bg-white/5 hover:bg-primary hover:text-black transition-colors"
+                className="p-2 border border-white/10 rounded-xl text-white bg-white/5 hover:bg-primary hover:text-black transition-colors cursor-pointer"
                 onClick={() => {
                   if (isVideo) {
                     window.open(currentRawUrl, '_blank');
@@ -2001,7 +2001,7 @@ const LightboxModal = ({
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="p-2.5 sm:p-3 border border-white/10 rounded-xl text-white bg-white/5 hover:bg-white/20 transition-colors"
+                className="p-2 border border-white/10 rounded-xl text-white bg-white/5 hover:bg-white/20 transition-colors cursor-pointer"
                 onClick={onClose}
                 title="Fechar"
               >
@@ -2010,24 +2010,31 @@ const LightboxModal = ({
             </div>
           </div>
 
-          {/* CENTER MEDIA DISPLAY CONTAINER */}
-          <div className="relative flex-1 min-h-[280px] sm:min-h-[360px] max-h-[58vh] sm:max-h-[64vh] w-full flex items-center justify-center bg-black/80 rounded-2xl border border-white/5 overflow-hidden group">
+          {/* Event description textual content */}
+          {activeGallery.description && (
+            <p className="text-white/70 text-xs leading-relaxed line-clamp-2 shrink-0">
+              {activeGallery.description}
+            </p>
+          )}
+
+          {/* CENTER MEDIA DISPLAY CONTAINER - Fixed max height carousel to avoid vertical empty space */}
+          <div className="carousel relative w-full flex items-center justify-center bg-black/90 rounded-2xl border border-white/5 overflow-hidden group h-[300px] max-h-[300px] shrink">
             {/* Prev/Next Navigation Overlay */}
             {activeGallery.images.length > 1 && (
               <>
                 <button 
                   onClick={prevImage}
-                  className="absolute left-3 z-30 p-2.5 sm:p-3 text-white hover:text-primary bg-black/70 hover:bg-black/90 rounded-full border border-white/10 transition-all backdrop-blur-md shadow-lg"
+                  className="absolute left-2.5 z-30 p-2 text-white hover:text-primary bg-black/75 hover:bg-black/95 rounded-full border border-white/10 transition-all backdrop-blur-md shadow-lg cursor-pointer"
                   title="Anterior"
                 >
-                  <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 rotate-180" />
+                  <ChevronRight className="w-5 h-5 rotate-180" />
                 </button>
                 <button 
                   onClick={nextImage}
-                  className="absolute right-3 z-30 p-2.5 sm:p-3 text-white hover:text-primary bg-black/70 hover:bg-black/90 rounded-full border border-white/10 transition-all backdrop-blur-md shadow-lg"
+                  className="absolute right-2.5 z-30 p-2 text-white hover:text-primary bg-black/75 hover:bg-black/95 rounded-full border border-white/10 transition-all backdrop-blur-md shadow-lg cursor-pointer"
                   title="Próximo"
                 >
-                  <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <ChevronRight className="w-5 h-5" />
                 </button>
               </>
             )}
@@ -2039,17 +2046,17 @@ const LightboxModal = ({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 1.02 }}
                 transition={{ duration: 0.2 }}
-                className="w-full h-full flex items-center justify-center p-2"
+                className="w-full h-full flex items-center justify-center p-1"
               >
                 {isVideo ? (
                   <div className={
                     isHorizontalVideo(currentRawUrl)
-                      ? "relative w-full max-w-[800px] aspect-[16/9] rounded-xl overflow-hidden border border-white/10 bg-black flex items-center justify-center"
-                      : "relative h-full max-h-[55vh] aspect-[9/16] rounded-xl overflow-hidden border border-white/10 bg-black flex items-center justify-center"
+                      ? "relative w-full max-w-[720px] aspect-[16/9] rounded-xl overflow-hidden border border-white/10 bg-black flex items-center justify-center max-h-[280px]"
+                      : "relative h-full max-h-[280px] aspect-[9/16] rounded-xl overflow-hidden border border-white/10 bg-black flex items-center justify-center"
                   }>
                     <iframe
                       src={displayUrl}
-                      className="w-full h-full border-0 absolute inset-0"
+                      className="w-full h-full border-0 absolute inset-0 object-contain"
                       allow="autoplay; encrypted-media"
                       allowFullScreen
                     />
@@ -2058,7 +2065,8 @@ const LightboxModal = ({
                   <img
                     src={displayUrl}
                     alt={`Foto ${currentImageIndex + 1}`}
-                    className="max-w-full max-h-[55vh] sm:max-h-[60vh] object-contain rounded-xl shadow-2xl"
+                    className="max-w-full max-h-[285px] h-full object-contain rounded-xl shadow-xl"
+                    style={{ objectFit: 'contain' }}
                     referrerPolicy="no-referrer"
                   />
                 )}
@@ -2067,18 +2075,18 @@ const LightboxModal = ({
           </div>
 
           {/* BOTTOM PASSADOR DE IMAGEM (PAGINATION & CONTROLS) - Directly below media */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-white/10 text-xs">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 border-t border-white/10 text-xs shrink-0">
             <div className="text-white/60 font-mono text-[11px] font-bold uppercase tracking-wider">
               Item <span className="text-primary font-black">{currentImageIndex + 1}</span> de <span className="text-white">{activeGallery.images.length}</span>
             </div>
 
             {/* Indicator Dots */}
-            <div className="flex items-center gap-1.5 max-w-[60vw] overflow-x-auto py-1 px-2 no-scrollbar">
+            <div className="flex items-center gap-1.5 max-w-[60vw] overflow-x-auto py-0.5 px-2 no-scrollbar">
               {activeGallery.images.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setCurrentImageIndex(i)}
-                  className={`h-1.5 transition-all duration-300 rounded-full shrink-0 ${
+                  className={`h-1.5 transition-all duration-300 rounded-full shrink-0 cursor-pointer ${
                     i === currentImageIndex 
                       ? "w-6 bg-primary shadow-[0_0_10px_rgba(255,165,0,0.5)]" 
                       : "w-2 bg-white/20 hover:bg-white/40"
@@ -2091,13 +2099,13 @@ const LightboxModal = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={prevImage}
-                className="px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/80 hover:text-white hover:bg-white/10 font-bold uppercase text-[10px] tracking-wider transition-colors cursor-pointer"
+                className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/80 hover:text-white hover:bg-white/10 font-bold uppercase text-[10px] tracking-wider transition-colors cursor-pointer"
               >
                 Anterior
               </button>
               <button
                 onClick={nextImage}
-                className="px-3.5 py-1.5 rounded-xl bg-primary text-black hover:bg-amber-400 font-black uppercase text-[10px] tracking-wider transition-colors shadow-md cursor-pointer"
+                className="px-3 py-1.5 rounded-xl bg-primary text-black hover:bg-amber-400 font-black uppercase text-[10px] tracking-wider transition-colors shadow-md cursor-pointer"
               >
                 Próximo
               </button>
