@@ -1851,42 +1851,18 @@ const ShowsEventosPage = ({
 };
 
 // --- Reusable Global Lightbox Modal ---
-const VIDEO_DRIVE_IDS = [
-  "1fb0XTgYjm6Q8lwbk_TnTfBR6SeUeodtq",
-  "1RGESiFfQyjzIbPecuAF_mpA68UruO3g0",
-  "14DVFafrB9xmJuCHDZciQrZ6ziHa1djPu",
-  "15gvlxD_yTIt-4_N2Uyn3fX9T8pgBlQOW",
-  "1HrFus24gjej45p0Yd2DO1nEQuXokJg74",
-  "1fFdYOU7k51sSlQ6s1QeyicwZdIfG0Eiy",
-  "1EgHuTTvIF_KBdNyPsCRqpIY3kMWgubcg",
-  "1HEJrcS-3P2HCMT5Bshxgf91pOoKzMv-X",
-  "1AXgQv4zoMt-P95xEH9nb48pP2o6luquB",
-  "1aSVAubaZXvhY9I3H_YPVOW-RgL1Vq1Bv",
-  "1lncWWJ-Fcd17v7xAJmEz1Suwgj6ddn3G"
-];
-
 const isVideoUrl = (url: string) => {
-  if (url.endsWith(".mp4") || url.includes(".mp4") || url.includes("/video/")) return true;
-  return VIDEO_DRIVE_IDS.some(id => url.includes(id));
+  return url.includes("drive.google.com") || url.endsWith(".mp4") || url.includes("video");
 };
 
 const isHorizontalVideo = (url: string) => {
   return url.includes("1fFdYOU7k51sSlQ6s1QeyicwZdIfG0Eiy") || url.includes("horizontal");
 };
 
-const getMediaDisplayUrl = (url: string) => {
-  if (isVideoUrl(url)) {
-    const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-    if (match && match[1]) {
-      return `https://drive.google.com/file/d/${match[1]}/preview`;
-    }
-    return url;
-  }
-  
-  // Format Google Drive photo URLs directly to crisp image thumbnails
+const getGoogleDriveEmbedUrl = (url: string) => {
   const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (match && match[1]) {
-    return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1600`;
+    return `https://drive.google.com/file/d/${match[1]}/preview`;
   }
   return url;
 };
@@ -1909,10 +1885,6 @@ const LightboxModal = ({
 
   const activeGallery = galleries.find(g => g.id === selectedGalleryId);
   if (!activeGallery) return null;
-
-  const currentRawUrl = activeGallery.images[currentImageIndex];
-  const displayUrl = getMediaDisplayUrl(currentRawUrl);
-  const isVideo = isVideoUrl(currentRawUrl);
 
   const handleDownload = async (imageUrl: string) => {
     try {
@@ -1947,169 +1919,138 @@ const LightboxModal = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[160] bg-black/95 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6"
+        className="fixed inset-0 z-[160] bg-black/98 md:backdrop-blur-3xl flex items-center justify-center"
         onClick={onClose}
       >
-        <div 
-          className="event-modal-container relative w-full max-w-4xl bg-[#0d0d0d] border border-white/10 rounded-3xl shadow-2xl p-4 sm:p-5 flex flex-col items-stretch justify-center gap-2.5 my-auto max-h-[94vh] overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* HEADER BAR - Compact title & details */}
-          <div className="flex items-center justify-between gap-3 pb-2 border-b border-white/10 shrink-0">
-            <div className="flex-1 min-w-0 pr-1">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="text-primary text-[10px] font-black uppercase tracking-[0.2em] bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-full">
-                  {activeGallery.date}
-                </span>
-                <span className="text-white/50 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                  <MapPin className="w-3 h-3 text-primary shrink-0" />
-                  <span className="truncate">{activeGallery.location}</span>
-                </span>
-                {isVideo ? (
-                  <span className="bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                    <Video className="w-3 h-3 shrink-0" /> Vídeo
-                  </span>
-                ) : (
-                  <span className="bg-white/10 text-white/70 border border-white/5 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                    Foto
-                  </span>
-                )}
-              </div>
-              <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-tight truncate">
-                {activeGallery.title}
-              </h2>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2 shrink-0">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-2 border border-white/10 rounded-xl text-white bg-white/5 hover:bg-primary hover:text-black transition-colors cursor-pointer"
-                onClick={() => {
-                  if (isVideo) {
-                    window.open(currentRawUrl, '_blank');
-                  } else {
-                    handleDownload(displayUrl);
-                  }
-                }}
-                title={isVideo ? "Abrir no Google Drive" : "Download Imagem"}
-              >
-                {isVideo ? <ExternalLink className="w-4 h-4" /> : <Download className="w-4 h-4" />}
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-2 border border-white/10 rounded-xl text-white bg-white/5 hover:bg-white/20 transition-colors cursor-pointer"
-                onClick={onClose}
-                title="Fechar"
-              >
-                <X className="w-4 h-4" />
-              </motion.button>
-            </div>
+        <div className="absolute top-6 left-6 lg:top-10 lg:left-10 z-20 bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/5 max-w-xs md:max-w-md">
+          <span className="text-primary text-[10px] font-black uppercase tracking-[0.4em] mb-1 block">{activeGallery.date}</span>
+          <h2 className="text-lg lg:text-2xl font-black text-white uppercase tracking-tighter truncate">{activeGallery.title}</h2>
+          <div className="flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1 mb-2">
+            <MapPin className="w-3 h-3 text-primary" /> {activeGallery.location}
           </div>
-
-          {/* Event description textual content */}
-          {activeGallery.description && (
-            <p className="text-white/70 text-xs leading-relaxed line-clamp-2 shrink-0">
-              {activeGallery.description}
-            </p>
+          {isVideoUrl(activeGallery.images[currentImageIndex]) ? (
+            <span className="bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+              <Video className="w-3 h-3 shrink-0" /> Vídeo do Evento
+            </span>
+          ) : (
+            <span className="bg-white/10 text-white/70 border border-white/5 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+              <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" fillRule="evenodd" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Foto do Evento
+            </span>
           )}
+        </div>
 
-          {/* CENTER MEDIA DISPLAY CONTAINER - Fixed max height carousel to avoid vertical empty space */}
-          <div className="carousel relative w-full flex items-center justify-center bg-black/90 rounded-2xl border border-white/5 overflow-hidden group h-[300px] max-h-[300px] shrink">
-            {/* Prev/Next Navigation Overlay */}
-            {activeGallery.images.length > 1 && (
-              <>
-                <button 
-                  onClick={prevImage}
-                  className="absolute left-2.5 z-30 p-2 text-white hover:text-primary bg-black/75 hover:bg-black/95 rounded-full border border-white/10 transition-all backdrop-blur-md shadow-lg cursor-pointer"
-                  title="Anterior"
-                >
-                  <ChevronRight className="w-5 h-5 rotate-180" />
-                </button>
-                <button 
-                  onClick={nextImage}
-                  className="absolute right-2.5 z-30 p-2 text-white hover:text-primary bg-black/75 hover:bg-black/95 rounded-full border border-white/10 transition-all backdrop-blur-md shadow-lg cursor-pointer"
-                  title="Próximo"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </>
+        <div className="absolute top-6 right-6 lg:top-10 lg:right-10 z-20 flex gap-3">
+          <motion.button
+            whileHover={{ scale: 1.1, backgroundColor: "rgba(255,165,0,0.2)" }}
+            whileActive={{ scale: 0.9 }}
+            className="p-4 border border-white/10 rounded-full text-white bg-black/40 backdrop-blur-md transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              const url = activeGallery.images[currentImageIndex];
+              if (isVideoUrl(url)) {
+                window.open(url, '_blank');
+              } else {
+                handleDownload(url);
+              }
+            }}
+            title={isVideoUrl(activeGallery.images[currentImageIndex]) ? "Abrir no Google Drive" : "Download Imagem"}
+          >
+            {isVideoUrl(activeGallery.images[currentImageIndex]) ? (
+              <ExternalLink className="w-5 h-5 lg:w-6 lg:h-6" />
+            ) : (
+              <Download className="w-5 h-5 lg:w-6 lg:h-6" />
             )}
+          </motion.button>
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentImageIndex}
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 1.02 }}
-                transition={{ duration: 0.2 }}
-                className="w-full h-full flex items-center justify-center p-1"
-              >
-                {isVideo ? (
-                  <div className={
-                    isHorizontalVideo(currentRawUrl)
-                      ? "relative w-full max-w-[720px] aspect-[16/9] rounded-xl overflow-hidden border border-white/10 bg-black flex items-center justify-center max-h-[280px]"
-                      : "relative h-full max-h-[280px] aspect-[9/16] rounded-xl overflow-hidden border border-white/10 bg-black flex items-center justify-center"
-                  }>
-                    <iframe
-                      src={displayUrl}
-                      className="w-full h-full border-0 absolute inset-0 object-contain"
-                      allow="autoplay; encrypted-media"
-                      allowFullScreen
-                    />
-                  </div>
-                ) : (
-                  <img
-                    src={displayUrl}
-                    alt={`Foto ${currentImageIndex + 1}`}
-                    className="max-w-full max-h-[285px] h-full object-contain rounded-xl shadow-xl"
-                    style={{ objectFit: 'contain' }}
-                    referrerPolicy="no-referrer"
+          <motion.button
+            whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.1)" }}
+            whileActive={{ scale: 0.9 }}
+            className="p-4 border border-white/10 rounded-full text-white bg-black/40 backdrop-blur-md transition-colors"
+            onClick={onClose}
+            title="Fechar"
+          >
+            <X className="w-5 h-5 lg:w-6 lg:h-6" />
+          </motion.button>
+        </div>
+        
+        {/* Main interactive area */}
+        <div className="relative w-full h-full flex items-center justify-center">
+          <button 
+            onClick={prevImage}
+            className="absolute left-4 lg:left-8 p-4 text-white hover:text-primary transition-all z-35 bg-black/20 hover:bg-black/40 rounded-full backdrop-blur-sm"
+          >
+            <ChevronRight className="w-6 h-6 lg:w-12 lg:h-12 rotate-180" />
+          </button>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentImageIndex}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              transition={{ duration: 0.3 }}
+              className="w-full h-full flex items-center justify-center p-4 lg:p-12"
+            >
+              {isVideoUrl(activeGallery.images[currentImageIndex]) ? (
+                <div 
+                  className={
+                    isHorizontalVideo(activeGallery.images[currentImageIndex])
+                      ? "relative w-[min(90vw,800px)] md:w-[min(85vw,960px)] aspect-[16/9] rounded-3xl overflow-hidden border border-white/10 bg-black shadow-[0_0_100px_rgba(255,165,0,0.2)] flex items-center justify-center"
+                      : "relative w-[min(90vw,360px)] md:w-[min(85vw,420px)] aspect-[9/16] rounded-3xl overflow-hidden border border-white/10 bg-black shadow-[0_0_100px_rgba(255,165,0,0.2)] flex items-center justify-center"
+                  }
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <iframe
+                    src={getGoogleDriveEmbedUrl(activeGallery.images[currentImageIndex])}
+                    className="w-full h-full border-0 absolute inset-0"
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
                   />
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* BOTTOM PASSADOR DE IMAGEM (PAGINATION & CONTROLS) - Directly below media */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 border-t border-white/10 text-xs shrink-0">
-            <div className="text-white/60 font-mono text-[11px] font-bold uppercase tracking-wider">
-              Item <span className="text-primary font-black">{currentImageIndex + 1}</span> de <span className="text-white">{activeGallery.images.length}</span>
-            </div>
-
-            {/* Indicator Dots */}
-            <div className="flex items-center gap-1.5 max-w-[60vw] overflow-x-auto py-0.5 px-2 no-scrollbar">
-              {activeGallery.images.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentImageIndex(i)}
-                  className={`h-1.5 transition-all duration-300 rounded-full shrink-0 cursor-pointer ${
-                    i === currentImageIndex 
-                      ? "w-6 bg-primary shadow-[0_0_10px_rgba(255,165,0,0.5)]" 
-                      : "w-2 bg-white/20 hover:bg-white/40"
-                  }`}
+                </div>
+              ) : (
+                <img
+                  src={activeGallery.images[currentImageIndex]}
+                  alt={`Foto ${currentImageIndex + 1}`}
+                  className="max-w-full max-h-[75vh] md:max-h-[85vh] object-contain shadow-[0_0_100px_rgba(0,0,0,0.8)] rounded-lg animate-fade-in"
+                  referrerPolicy="no-referrer"
+                  onClick={(e) => e.stopPropagation()}
                 />
-              ))}
-            </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
 
-            {/* Quick Control Buttons */}
-            <div className="flex items-center gap-2">
+          <button 
+            onClick={nextImage}
+            className="absolute right-4 lg:right-8 p-4 text-white hover:text-primary transition-all z-35 bg-black/20 hover:bg-black/40 rounded-full backdrop-blur-sm"
+          >
+            <ChevronRight className="w-6 h-6 lg:w-12 lg:h-12" />
+          </button>
+        </div>
+
+        {/* Pagination overlay */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-6 z-20 bg-black/50 backdrop-blur-xl px-6 py-3 rounded-full border border-white/5">
+          <div className="flex gap-1.5">
+            {activeGallery.images.map((_, i) => (
               <button
-                onClick={prevImage}
-                className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/80 hover:text-white hover:bg-white/10 font-bold uppercase text-[10px] tracking-wider transition-colors cursor-pointer"
-              >
-                Anterior
-              </button>
-              <button
-                onClick={nextImage}
-                className="px-3 py-1.5 rounded-xl bg-primary text-black hover:bg-amber-400 font-black uppercase text-[10px] tracking-wider transition-colors shadow-md cursor-pointer"
-              >
-                Próximo
-              </button>
-            </div>
+                key={i}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentImageIndex(i);
+                }}
+                className={`h-1 transition-all duration-500 rounded-full ${
+                  i === currentImageIndex 
+                    ? "w-6 bg-primary shadow-[0_0_10px_rgba(255,165,0,0.5)]" 
+                    : "w-2 bg-white/20 hover:bg-white/40"
+                }`}
+              />
+            ))}
+          </div>
+          <div className="w-px h-3 bg-white/10" />
+          <div className="text-white/40 font-mono text-[10px] uppercase tracking-widest">
+            {currentImageIndex + 1} / {activeGallery.images.length}
           </div>
         </div>
       </motion.div>
