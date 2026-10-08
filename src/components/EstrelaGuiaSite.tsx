@@ -19,11 +19,30 @@ import {
   Menu,
   Copy,
   Video,
-  ExternalLink
+  ExternalLink,
+  Clock,
+  Sparkles,
+  Navigation,
+  CalendarPlus,
+  Check,
+  Ticket,
+  Edit2,
+  Settings,
+  Plus,
+  HelpCircle,
+  AlertCircle,
+  Lock,
+  ZoomIn,
+  ZoomOut,
+  Eye
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { subscribeToComments, addComment, type Comment } from "../services/commentService";
 import { subscribeToEvents, type Event } from "../services/eventService";
+import { DocumentManagerModal } from "./DocumentManagerModal";
+import { AdminLoginModal } from "./AdminLoginModal";
+import { parseDriveUrl, isDriveUrl } from "../utils/driveUtils";
+import { TransparencyDoc } from "../types/events";
 
 // --- Components ---
 
@@ -122,48 +141,310 @@ const CommentModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
   );
 };
 
-const PdfViewerModal = ({ isOpen, onClose, url, title }: { isOpen: boolean; onClose: () => void; url: string; title: string }) => {
-  if (!isOpen) return null;
+const DOCUMENT_PREVIEWS: Record<string, string[]> = {
+  oficio: [
+    "/previews/oficio/page-1.jpg",
+    "/previews/oficio/page-2.jpg",
+  ],
+  "oficio-332": [
+    "/previews/oficio/page-1.jpg",
+    "/previews/oficio/page-2.jpg",
+  ],
+  "emenda-parlamentar": [
+    "/previews/oficio/page-1.jpg",
+    "/previews/oficio/page-2.jpg",
+  ],
+  transparencia: [
+    "/previews/oficio/page-1.jpg",
+    "/previews/oficio/page-2.jpg",
+  ],
+  estatuto: [
+    "/previews/estatuto/page-1.jpg",
+    "/previews/estatuto/page-2.jpg",
+    "/previews/estatuto/page-3.jpg",
+    "/previews/estatuto/page-4.jpg",
+    "/previews/estatuto/page-5.jpg",
+    "/previews/estatuto/page-6.jpg",
+  ],
+  relatorio: ["/previews/relatorio/page-1.jpg"],
+  ata: ["/previews/ata-eleicao/page-1.jpg"],
+  cnpj: ["/previews/cnpj/page-1.jpg"],
+  certidoes: ["/previews/certidoes/page-1.jpg"],
+  planejamento: [
+    "/previews/planejamento/page-1.jpg",
+    "/previews/planejamento/page-2.jpg",
+  ],
+};
 
-  // Normalize Google Drive links for iframe display
-  const displayUrl = url.includes('drive.google.com') && url.includes('/view') 
-    ? url.replace('/view', '/preview') 
-    : url;
+const isOficio332Doc = (url: string, title: string, docId?: string): boolean => {
+  const lowUrl = (url || "").toLowerCase();
+  const lowTitle = (title || "").toLowerCase();
+  const lowId = (docId || "").toLowerCase();
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 lg:p-10">
-      <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={onClose} />
+    lowId === "oficio" ||
+    lowId === "oficio-332" ||
+    lowId === "emenda-parlamentar" ||
+    lowId === "transparencia" ||
+    lowTitle.includes("332") ||
+    lowTitle.includes("ofício") ||
+    lowTitle.includes("oficio") ||
+    lowTitle.includes("emenda") ||
+    lowUrl.includes("332") ||
+    lowUrl.includes("oficio") ||
+    lowUrl.includes("sei_3158555") ||
+    lowUrl.includes("1wgwji") ||
+    lowUrl.includes("emenda")
+  );
+};
+
+const getDocumentPreviewPages = (url: string, title: string, docId?: string): string[] | null => {
+  if (docId && DOCUMENT_PREVIEWS[docId]) {
+    return DOCUMENT_PREVIEWS[docId];
+  }
+  if (isOficio332Doc(url, title, docId)) {
+    return DOCUMENT_PREVIEWS.oficio;
+  }
+  const lowUrl = (url || "").toLowerCase();
+  const lowTitle = (title || "").toLowerCase();
+
+  if (lowUrl.includes("estatuto") || lowTitle.includes("estatuto") || lowUrl.includes("1za_dweutnxdlr0elu2ua0e5z8u-ftskq")) {
+    return DOCUMENT_PREVIEWS.estatuto;
+  }
+  if (lowUrl.includes("relatorio") || lowTitle.includes("relat") || lowTitle.includes("atividades")) {
+    return DOCUMENT_PREVIEWS.relatorio;
+  }
+  if (lowUrl.includes("ata") || lowTitle.includes("eleição") || lowTitle.includes("eleicao") || lowTitle.includes("ata da assembleia")) {
+    return DOCUMENT_PREVIEWS.ata;
+  }
+  if (lowUrl.includes("cnpj") || lowTitle.includes("cnpj")) {
+    return DOCUMENT_PREVIEWS.cnpj;
+  }
+  if (lowUrl.includes("certid") || lowTitle.includes("certid")) {
+    return DOCUMENT_PREVIEWS.certidoes;
+  }
+
+  // If url is an image data URL or image file
+  if (url.startsWith("data:image/") || /\.(png|jpe?g|webp|gif)$/i.test(url)) {
+    return [url];
+  }
+
+  return null;
+};
+
+const PdfViewerModal = ({ 
+  isOpen, 
+  onClose, 
+  url, 
+  title,
+  docId
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  url: string; 
+  title: string;
+  docId?: string;
+}) => {
+  if (!isOpen) return null;
+
+  const isOficio = isOficio332Doc(url, title, docId);
+  const [zoom, setZoom] = useState(100);
+  const previewPages = getDocumentPreviewPages(url, title, docId);
+  const driveInfo = parseDriveUrl(url);
+  const isDrive = isDriveUrl(url);
+  
+  const effectiveDownloadUrl = isOficio 
+    ? "/SEI_3158555_Oficio_332.pdf" 
+    : (driveInfo ? driveInfo.downloadUrl : url);
+  const effectiveViewUrl = isOficio 
+    ? "/SEI_3158555_Oficio_332.pdf" 
+    : (driveInfo ? driveInfo.viewUrl : url);
+  const displayUrl = driveInfo ? driveInfo.previewUrl : (isOficio ? "/SEI_3158555_Oficio_332.pdf" : url);
+  const displayTitle = isOficio ? "OFÍCIO Nº 332/2026 - EMENDA PARLAMENTAR 2026" : title;
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-2 sm:p-4 lg:p-8 font-sans">
+      <div className="absolute inset-0 bg-black/95 backdrop-blur-md" onClick={onClose} />
       <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative w-full h-full max-w-5xl bg-[#111] rounded-3xl border border-white/10 overflow-hidden flex flex-col shadow-2xl"
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="relative w-full h-full max-w-5xl bg-[#11131A] rounded-3xl border border-white/10 overflow-hidden flex flex-col shadow-2xl z-10"
       >
-        <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-          <div className="flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-primary rounded-full" />
-            <span className="text-sm font-black uppercase tracking-widest text-white/80">{title}</span>
+        {/* Header Bar */}
+        <div className="p-4 sm:p-5 border-b border-white/10 flex flex-wrap items-center justify-between bg-black/60 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-1.5 h-6 bg-primary rounded-full shrink-0" />
+            <div className="min-w-0">
+              <span className="text-xs sm:text-sm font-black uppercase tracking-widest text-white truncate block">
+                {displayTitle}
+              </span>
+              <span className="text-[10px] text-primary/90 font-mono uppercase tracking-wider block">
+                {isOficio 
+                  ? "Documento Original SEI nº 3158555 • Ministério da Cultura • 2 Páginas" 
+                  : (previewPages ? `Documento Original • ${previewPages.length} ${previewPages.length > 1 ? "Páginas" : "Página"}` : (isDrive ? "Google Drive • Documento Oficial" : "Documento Oficial • Moçambique Estrela Guia"))}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
+
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Zoom Controls */}
+            {previewPages && (
+              <div className="hidden sm:flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+                <button
+                  type="button"
+                  onClick={() => setZoom(z => Math.max(75, z - 25))}
+                  className="p-1.5 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors"
+                  title="Diminuir Zoom"
+                >
+                  <ZoomOut className="w-4 h-4" />
+                </button>
+                <span className="text-[10px] font-mono px-1.5 text-white/70 min-w-[42px] text-center">
+                  {zoom}%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setZoom(z => Math.min(200, z + 25))}
+                  className="p-1.5 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors"
+                  title="Aumentar Zoom"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
             <a 
-              href={url} 
+              href={effectiveDownloadUrl} 
+              download={isOficio ? "SEI_3158555_Oficio_332.pdf" : `${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}.pdf`}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-primary text-black hover:bg-orange-500 rounded-xl transition-all font-bold text-xs uppercase tracking-wider shadow-md"
+              title="Baixar Arquivo Original"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Baixar Arquivo Original</span>
+            </a>
+            
+            <a 
+              href={effectiveViewUrl} 
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 hover:bg-white/5 rounded-lg transition-colors text-white/40 hover:text-primary"
+              className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/60 hover:text-white border border-white/10 flex items-center gap-1"
               title="Abrir em Nova Aba"
             >
-              <Download className="w-5 h-5" />
+              <ExternalLink className="w-4 h-4" />
+              {isDrive && <span className="text-[10px] hidden md:inline">Drive</span>}
             </a>
-            <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors">
-              <X className="w-6 h-6" />
+            
+            <button 
+              onClick={onClose} 
+              className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/60 hover:text-white border border-white/10"
+              title="Fechar"
+            >
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
-        <div className="flex-1 bg-white">
-          <iframe 
-            src={displayUrl.includes('drive.google.com') ? displayUrl : `${displayUrl}#toolbar=0`} 
-            className="w-full h-full"
-            title={title}
-          />
+
+        {/* Document Viewer Frame - Only reading the sent original document */}
+        <div className="flex-1 bg-[#0b0c10] relative flex flex-col min-h-0 overflow-y-auto p-4 sm:p-8">
+          {previewPages ? (
+            <div className="max-w-4xl mx-auto w-full space-y-6">
+              {previewPages.map((pageImg, idx) => (
+                <div 
+                  key={idx}
+                  className="relative mx-auto rounded-lg overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-white/15 bg-white transition-all duration-200"
+                  style={{
+                    width: `${zoom}%`,
+                    maxWidth: zoom <= 100 ? "100%" : `${zoom}%`
+                  }}
+                >
+                  <img 
+                    src={pageImg} 
+                    alt={`${displayTitle} - Página ${idx + 1}`}
+                    className="w-full h-auto block select-none"
+                    loading="lazy"
+                  />
+                  {previewPages.length > 1 && (
+                    <div className="py-2.5 px-4 bg-[#14161f] text-white/70 text-[11px] font-mono font-bold text-center border-t border-black/20 flex items-center justify-between">
+                      <span>{displayTitle}</span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-white text-[10px]">
+                        Página {idx + 1} de {previewPages.length}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : isDrive ? (
+            <div className="flex-1 flex flex-col min-h-0 relative">
+              <div className="p-3 bg-amber-500/10 border-b border-amber-500/20 px-6 flex items-center justify-between text-xs text-amber-200">
+                <span className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                  Arquivo hospedado no Google Drive. Se a visualização abaixo for bloqueada pela segurança do Google, utilize os botões:
+                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={effectiveViewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold underline text-amber-300 hover:text-white"
+                  >
+                    Abrir no Drive &rarr;
+                  </a>
+                </div>
+              </div>
+
+              <iframe 
+                src={displayUrl} 
+                className="w-full h-full flex-1 border-none bg-black"
+                title={displayTitle}
+              />
+            </div>
+          ) : (
+            <object
+              data={displayUrl}
+              type="application/pdf"
+              className="w-full h-full flex-1"
+            >
+              <iframe 
+                src={`${displayUrl}#toolbar=1`} 
+                className="w-full h-full border-none"
+                title={displayTitle}
+              >
+                <div className="flex flex-col items-center justify-center h-full p-8 text-center text-white space-y-4">
+                  <FileText className="w-16 h-16 text-primary mb-2" />
+                  <h4 className="text-lg font-bold">Documento disponível para visualização e download</h4>
+                  <p className="text-sm text-white/50 max-w-md">
+                    Clique no botão abaixo para abrir ou fazer download do arquivo em alta resolução.
+                  </p>
+                  <a 
+                    href={url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="px-6 py-3 bg-primary text-black rounded-xl font-bold uppercase text-xs tracking-widest hover:scale-105 transition-transform"
+                  >
+                    Abrir Documento
+                  </a>
+                </div>
+              </iframe>
+            </object>
+          )}
+        </div>
+          
+        {/* Bottom Bar Info */}
+        <div className="px-6 py-3 bg-black/90 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-white/50">
+          <span className="flex items-center gap-1.5">
+            <Check className="w-3.5 h-3.5 text-emerald-400" />
+            {isOficio 
+              ? "Documento Original Oficial — Ministério da Cultura / SEI nº 3158555" 
+              : "Visualização do documento original oficial"}
+          </span>
+          <a 
+            href={effectiveDownloadUrl} 
+            download={isOficio ? "SEI_3158555_Oficio_332.pdf" : `${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}.pdf`}
+            className="text-primary hover:underline font-bold flex items-center gap-1"
+          >
+            <Download className="w-3.5 h-3.5" /> Baixar cópia original em PDF &rarr;
+          </a>
         </div>
       </motion.div>
     </div>
@@ -187,9 +468,20 @@ const ImpactReportModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             <div className="w-2 h-10 bg-primary rounded-full" />
             <h3 className="text-2xl lg:text-4xl font-black uppercase tracking-tighter">Relatório Institucional e de Impacto</h3>
           </div>
-          <button onClick={onClose} className="p-3 hover:bg-white/5 rounded-full transition-colors">
-            <X className="w-8 h-8" />
-          </button>
+          <div className="flex items-center gap-3">
+            <a 
+              href="/relatorio.pdf" 
+              download="relatorio-atividades-estrela-guia.pdf"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-black font-bold uppercase text-xs tracking-wider hover:bg-orange-500 transition-all shadow-md"
+              title="Baixar Relatório em PDF"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Baixar PDF Oficial</span>
+            </a>
+            <button onClick={onClose} className="p-3 hover:bg-white/5 rounded-full transition-colors">
+              <X className="w-8 h-8" />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-8 lg:p-12 space-y-16 text-white selection:bg-primary selection:text-black">
@@ -348,26 +640,105 @@ const ImpactReportModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
   );
 };
 
-const TransparencyPortal = ({ onBack, onViewPdf }: { onBack: () => void; onViewPdf: (url: string, title: string) => void; key?: string }) => {
+const DEFAULT_DOCUMENTS: TransparencyDoc[] = [
+  { 
+    id: "oficio-332",
+    name: "OFÍCIO Nº 332/2026 - EMENDA PARLAMENTAR 2026", 
+    link: "/SEI_3158555_Oficio_332.pdf", 
+    backupLink: "https://drive.google.com/file/d/1wgwjiPAtaazA_-AsTgjznhci819qMMka/view?usp=sharing",
+    desc: "",
+    tag: "Ofício SEI • MinC"
+  },
+  { 
+    id: "estatuto",
+    name: "Estatuto Social", 
+    link: "/estatuto.pdf", 
+    backupLink: "https://drive.google.com/file/d/1Za_dweUtnxDlr0elU2uA0e5z8u-ftskq/view?usp=sharing",
+    desc: "Regimento interno, finalidades e diretrizes estatutárias (2023)",
+    tag: "Estatuto • 6 Págs"
+  },
+  { 
+    id: "relatorio",
+    name: "Relatório de Atividades", 
+    link: "/relatorio.pdf", 
+    desc: "Resumo anual de ações, Ponto de Cultura e Instrumento nº 977307",
+    tag: "Relatório Oficial"
+  },
+  { 
+    id: "ata",
+    name: "Ata de Eleição e Posse", 
+    link: "/ata-eleicao.pdf", 
+    desc: "Composição oficial da diretoria executiva e conselho fiscal",
+    tag: "Governança"
+  },
+  { 
+    id: "cnpj",
+    name: "Cartão CNPJ", 
+    link: "/cnpj.pdf", 
+    desc: "Comprovante de Inscrição e Situação Cadastral Ativa (06.207.190/0001-07)",
+    tag: "Receita Federal"
+  },
+  { 
+    id: "certidoes",
+    name: "Certidões Negativas", 
+    link: "/certidoes.pdf", 
+    desc: "Regularidade Fiscal Federal (Receita/PGFN), Estadual, Municipal e Trabalhista",
+    tag: "Certidão Conjunta"
+  },
+  { 
+    id: "transparencia",
+    name: "Transparência Governamental", 
+    link: "/SEI_3158555_Oficio_332.pdf", 
+    backupLink: "https://drive.google.com/file/d/1wgwjiPAtaazA_-AsTgjznhci819qMMka/view?usp=sharing",
+    desc: "Consulta de Convênios do Governo Federal (Portal da Transparência)",
+    tag: "Governo Federal"
+  }
+];
+
+const TransparencyPortal = ({ 
+  onBack, 
+  onViewPdf,
+  docs,
+  onOpenAdminLogin
+}: { 
+  onBack: () => void; 
+  onViewPdf: (url: string, title: string, docId?: string) => void; 
+  docs: TransparencyDoc[];
+  onOpenAdminLogin?: () => void;
+  key?: string;
+}) => {
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-black pt-32 pb-20 px-6"
+      className="min-h-screen bg-black pt-32 pb-20 px-6 font-sans"
     >
-      <div className="max-w-5xl mx-auto">
-        <button 
-          onClick={onBack}
-          className="flex items-center gap-2 text-primary font-black uppercase tracking-widest text-[10px] mb-12 hover:gap-4 transition-all"
-        >
-          <ChevronRight className="w-4 h-4 rotate-180" /> Voltar para o Início
-        </button>
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-12">
+          <button 
+            onClick={onBack}
+            className="flex items-center gap-2 text-primary font-black uppercase tracking-widest text-[10px] hover:gap-4 transition-all"
+          >
+            <ChevronRight className="w-4 h-4 rotate-180" /> Voltar para o Início
+          </button>
 
-        <div className="mb-20">
+          {onOpenAdminLogin && (
+            <button
+              onClick={onOpenAdminLogin}
+              className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-primary transition-colors py-2 px-3 rounded-xl bg-white/5 border border-white/5 hover:border-primary/20"
+              title="Acesso restrito para administradores"
+            >
+              <Lock className="w-3.5 h-3.5 text-primary" /> Área Restrita
+            </button>
+          )}
+        </div>
+
+        {/* Portal Header */}
+        <div className="mb-14 pb-10 border-b border-white/10">
           <span className="text-primary text-[10px] font-black uppercase tracking-[0.4em] mb-4 block">Institucional</span>
-          <h1 className="text-5xl md:text-7xl font-black mb-8 leading-none uppercase">Portal da<br/><span className="text-primary italic">Transparência</span></h1>
-          <p className="text-white/40 max-w-2xl leading-relaxed mb-6">
+          <h1 className="text-5xl md:text-7xl font-black mb-6 leading-none uppercase">Portal da<br/><span className="text-primary italic">Transparência</span></h1>
+          <p className="text-white/50 max-w-2xl leading-relaxed text-sm mb-6">
             Acesso público aos documentos oficiais, estatutos e relatórios de atividades da nossa organização. Compromisso real com a comunidade e nossos apoiadores.
           </p>
           <div className="inline-block p-4 rounded-2xl bg-white/5 border border-white/10">
@@ -377,42 +748,137 @@ const TransparencyPortal = ({ onBack, onViewPdf }: { onBack: () => void; onViewP
           </div>
         </div>
 
+        {/* Clean Dynamic Document Cards Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            { name: "Estatuto Social", link: "https://drive.google.com/file/d/1Za_dweUtnxDlr0elU2uA0e5z8u-ftskq/view?usp=sharing", desc: "Regimento interno e diretrizes" },
-            { name: "Relatório de Atividades", link: "/relatorio.pdf", desc: "Resumo anual de ações" },
-            { name: "Ata de Eleição", link: "/transparencia.pdf", desc: "Composição da diretoria" },
-            { name: "Cartão CNPJ", link: "/cnpj.pdf", desc: "Identificação Jurídica" },
-            { name: "Certidões Negativas", link: "/certidoes.pdf", desc: "Regularidade Fiscal" },
-            { name: "Transparência", link: "https://drive.google.com/file/d/1Z-Iod8dLGchF58aHlqThavU3RgMfQgO3/view?usp=sharing", desc: "Ações planejadas para o ano" }
-          ].map((doc, i) => (
-            <motion.button 
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              onClick={() => onViewPdf(doc.link, doc.name)}
-              className="group relative p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-primary transition-all text-left overflow-hidden min-h-[200px] flex flex-col justify-between"
-            >
-               <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Download className="w-6 h-6 text-primary" />
-               </div>
-               
-               <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-black transition-all shadow-lg">
-                 <FileText className="w-7 h-7" />
-               </div>
+          {docs.map((doc, i) => {
+            const driveInfo = parseDriveUrl(doc.link);
+            const isDrive = isDriveUrl(doc.link);
+            const isOficioCard = 
+              doc.id === "oficio-332" || 
+              doc.id === "emenda-parlamentar" || 
+              doc.id === "oficio" ||
+              doc.name.toLowerCase().includes("332") ||
+              doc.name.toLowerCase().includes("ofício") ||
+              doc.name.toLowerCase().includes("oficio");
 
-               <div>
-                 <h3 className="text-lg font-black text-white group-hover:text-primary transition-colors mb-2 uppercase tracking-tight">{doc.name}</h3>
-                 <p className="text-[10px] text-white/30 uppercase tracking-[0.2em] font-bold">{doc.desc}</p>
-               </div>
-            </motion.button>
-          ))}
+            const cardDownloadUrl = isOficioCard
+              ? "/SEI_3158555_Oficio_332.pdf"
+              : (isDrive ? (driveInfo ? driveInfo.downloadUrl : doc.link) : (doc.id === 'transparencia' ? '/SEI_3158555_Oficio_332.pdf' : doc.link));
+
+            const cardDownloadFileName = isOficioCard
+              ? "SEI_3158555_Oficio_332.pdf"
+              : `${doc.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.pdf`;
+
+            return (
+              <motion.div 
+                key={doc.id || i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                onClick={() => onViewPdf(doc.link, doc.name, doc.id)}
+                className={`group relative p-8 rounded-3xl bg-white/[0.02] border transition-all text-left overflow-hidden min-h-[230px] flex flex-col justify-between cursor-pointer hover:bg-white/[0.04] shadow-xl ${
+                  isOficioCard ? "border-primary/40 hover:border-primary shadow-primary/5" : "border-white/10 hover:border-primary"
+                }`}
+              >
+                 {/* Direct Download Button */}
+                 <div className="absolute top-6 right-6 z-10">
+                   <a
+                     href={cardDownloadUrl}
+                     download={cardDownloadFileName}
+                     onClick={(e) => e.stopPropagation()}
+                     className="p-3 rounded-xl bg-white/5 hover:bg-primary text-white/60 hover:text-black transition-all border border-white/10 hover:border-primary shadow-md block cursor-pointer"
+                     title={`Baixar ${doc.name}`}
+                   >
+                     <Download className="w-4 h-4" />
+                   </a>
+                 </div>
+                 
+                 <div>
+                   <div className="flex items-center gap-3">
+                     <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-black transition-all shadow-lg">
+                       <FileText className="w-7 h-7" />
+                     </div>
+                     <div className="flex flex-col gap-1">
+                       <span className="px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[9px] font-black uppercase tracking-widest w-fit">
+                         {doc.tag}
+                       </span>
+                       {isDrive && (
+                         <span className="text-[9px] text-amber-400 font-mono font-bold flex items-center gap-1">
+                           <Sparkles className="w-2.5 h-2.5" /> Google Drive
+                         </span>
+                       )}
+                     </div>
+                   </div>
+
+                   <div className="mt-4">
+                     <h3 className="text-lg font-black text-white group-hover:text-primary transition-colors mb-2 uppercase tracking-tight">
+                       {doc.name}
+                     </h3>
+                     {/* No large text underneath for Ofício block as explicitly requested */}
+                     {!isOficioCard && doc.desc && (
+                       <p className="text-[11px] text-white/50 leading-relaxed font-medium mb-3">
+                         {doc.desc}
+                       </p>
+                     )}
+                   </div>
+                 </div>
+
+                 {isOficioCard ? (
+                   <div className="mt-6 pt-3 border-t border-white/5 flex flex-col gap-2">
+                     <a
+                       href={cardDownloadUrl}
+                       download={cardDownloadFileName}
+                       onClick={(e) => e.stopPropagation()}
+                       className="w-full py-3 px-4 rounded-xl bg-primary text-black hover:bg-amber-400 font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 cursor-pointer"
+                       title="Baixar arquivo original"
+                     >
+                       <Download className="w-4 h-4" /> Baixar Arquivo Original
+                     </a>
+                     <button
+                       type="button"
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         onViewPdf(doc.link, doc.name, doc.id);
+                       }}
+                       className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white font-bold text-[10px] uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 border border-white/10 cursor-pointer"
+                     >
+                       <Eye className="w-3.5 h-3.5 text-primary" /> Ler Online (Sem Baixar) &rarr;
+                     </button>
+                   </div>
+                 ) : (
+                   <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[10px] text-primary font-bold uppercase tracking-wider mt-4">
+                     <button
+                       type="button"
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         onViewPdf(doc.link, doc.name, doc.id);
+                       }}
+                       className="flex items-center gap-1.5 group-hover:translate-x-1 transition-transform hover:text-white cursor-pointer"
+                     >
+                       <Eye className="w-3.5 h-3.5" /> Visualizar Documento &rarr;
+                     </button>
+                     {doc.backupLink && (
+                       <a
+                         href={doc.backupLink}
+                         target="_blank"
+                         rel="noopener noreferrer"
+                         onClick={(e) => e.stopPropagation()}
+                         className="text-white/30 hover:text-white transition-colors underline flex items-center gap-1"
+                         title="Abrir espelho via Google Drive"
+                       >
+                         <ExternalLink className="w-3 h-3" /> Espelho
+                       </a>
+                     )}
+                   </div>
+                 )}
+              </motion.div>
+            );
+          })}
         </div>
 
         <div className="mt-20 p-12 rounded-[3rem] bg-white/[0.01] border border-white/5 text-center">
-          <p className="text-white/20 text-xs uppercase tracking-widest font-bold">
-            Dúvidas sobre nossa gestão? Entre em contato pelo e-mail <span className="text-primary">contato@estrelaguia.org</span>
+          <p className="text-white/30 text-xs uppercase tracking-widest font-bold">
+            Dúvidas sobre nossa gestão ou suporte a documentos? Entre em contato pelo e-mail <span className="text-primary">contato@estrelaguia.org</span>
           </p>
         </div>
       </div>
@@ -423,7 +889,7 @@ const TransparencyPortal = ({ onBack, onViewPdf }: { onBack: () => void; onViewP
 const TopBar = () => {
   return (
     <div className="hidden lg:block bg-black py-2 border-b border-white/5">
-      <div className="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase tracking-widest text-white/40 font-bold">
+      <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 flex justify-between items-center text-[10px] uppercase tracking-widest text-white/40 font-bold">
         <div className="flex gap-6">
           <span className="flex items-center gap-2"><MapPin className="w-3 h-3 text-primary" /> Rua do Dólar, 290, Bairro São Jorge, Uberlândia-MG</span>
           <span className="flex items-center gap-2"><Mail className="w-3 h-3 text-primary" /> contato@estrelaguia.org</span>
@@ -461,6 +927,7 @@ const Navbar = ({
     { label: "Início", href: "#início", view: "home" as const },
     { label: "Sobre Nós", href: "#sobre-nós", view: "home" as const },
     { label: "Projetos", href: "#projetos", view: "home" as const },
+    { label: "Próximos Eventos", href: "#proximos-eventos", view: "home" as const },
     { label: "Shows e Eventos", href: "#shows-eventos", view: "shows" as const },
     { label: "Agenda", href: "#agenda", view: "home" as const },
     { label: "Galeria", href: "#galeria", view: "home" as const }
@@ -473,7 +940,7 @@ const Navbar = ({
     }
 
     const handleScroll = () => {
-      const sections = ["início", "sobre-nós", "projetos", "agenda", "galeria"];
+      const sections = ["início", "sobre-nós", "projetos", "proximos-eventos", "agenda", "galeria"];
       const scrollPosition = window.scrollY + 200; // offset for nav height
 
       for (const section of sections) {
@@ -526,22 +993,24 @@ const Navbar = ({
 
   return (
     <>
-      <nav className="sticky top-0 w-full z-50 bg-black/90 backdrop-blur-md border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center cursor-pointer" onClick={(e) => { handleItemClick(e, menuItems[0]); }}>
-            <span className="font-display font-black text-lg md:text-xl uppercase text-white tracking-tight hover:text-primary transition-colors">
+      <nav className="sticky top-0 w-full z-50 bg-black/95 backdrop-blur-md border-b border-white/5">
+        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 h-20 flex items-center justify-between gap-3 lg:gap-6">
+          <div className="flex items-center shrink-0 cursor-pointer" onClick={(e) => { handleItemClick(e, menuItems[0]); }}>
+            <span className="font-display font-black text-sm sm:text-base lg:text-lg xl:text-xl uppercase text-white tracking-tight hover:text-primary transition-colors whitespace-nowrap">
               Moçambique Estrela Guia
             </span>
           </div>
           
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-1 sm:gap-1.5 lg:gap-2.5 xl:gap-3.5 2xl:gap-5 shrink-0">
             {menuItems.map((item) => (
               <a 
                 key={item.label} 
                 href={item.href} 
                 onClick={(e) => handleItemClick(e, item)}
-                className={`text-xs font-bold uppercase tracking-widest transition-colors ${
-                  isItemActive(item) ? "text-primary" : "text-white/70 hover:text-primary"
+                className={`px-2 lg:px-3 xl:px-3.5 py-2 rounded-xl text-[11px] lg:text-xs font-bold uppercase tracking-wider xl:tracking-widest whitespace-nowrap transition-all duration-200 inline-flex items-center justify-center leading-none text-center ${
+                  isItemActive(item) 
+                    ? "text-primary bg-primary/10 shadow-xs shadow-primary/20" 
+                    : "text-white/75 hover:text-white hover:bg-white/5"
                 }`}
               >
                 {item.label}
@@ -549,7 +1018,7 @@ const Navbar = ({
             ))}
             <button 
               onClick={onOpenDonation}
-              className="bg-primary hover:bg-orange-600 text-black px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/10 hover:shadow-primary/30 active:scale-95 animate-pulse"
+              className="ml-1.5 lg:ml-2 xl:ml-3 bg-primary hover:bg-orange-600 text-black px-4 lg:px-5 xl:px-6 py-2.5 rounded-xl text-[11px] lg:text-xs font-black uppercase tracking-wider xl:tracking-widest whitespace-nowrap transition-all shadow-xl shadow-primary/10 hover:shadow-primary/30 active:scale-95 shrink-0 inline-flex items-center justify-center leading-none"
             >
               Doar Agora
             </button>
@@ -557,7 +1026,8 @@ const Navbar = ({
 
           <button 
             onClick={() => setIsMenuOpen(true)}
-            className="md:hidden p-2 text-white/70 hover:text-primary transition-colors"
+            className="md:hidden p-2 text-white/70 hover:text-primary transition-colors shrink-0"
+            aria-label="Abrir menu"
           >
             <Menu className="w-6 h-6" />
           </button>
@@ -626,7 +1096,13 @@ const Navbar = ({
   );
 };
 
-const Hero = ({ onOpenDocuments }: { onOpenDocuments: () => void }) => {
+const Hero = ({ 
+  onOpenDocuments, 
+  onOpenAdminLogin 
+}: { 
+  onOpenDocuments: () => void; 
+  onOpenAdminLogin: () => void; 
+}) => {
   return (
     <section id="início" className="relative h-[90vh] flex items-end pb-32 overflow-hidden bg-black">
       <div className="absolute inset-0">
@@ -655,12 +1131,19 @@ const Hero = ({ onOpenDocuments }: { onOpenDocuments: () => void }) => {
           <p className="text-xs md:text-sm text-white/50 mb-8 font-light leading-relaxed max-w-md">
             Fundado em 2002 no bairro São Jorge, preservamos a tradição do Congado e transformamos vidas através da cultura e inclusão social.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
             <button 
               onClick={onOpenDocuments}
-              className="bg-primary hover:bg-orange-600 text-black px-12 py-5 rounded-2xl text-sm font-black uppercase tracking-widest transition-all shadow-2xl shadow-primary/20"
+              className="bg-primary hover:bg-orange-600 text-black px-10 py-5 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-widest transition-all shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 cursor-pointer text-center"
             >
               PORTAL DA TRANSPARÊNCIA
+            </button>
+            <button 
+              onClick={onOpenAdminLogin}
+              className="flex items-center justify-center gap-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 hover:border-primary px-8 py-5 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-widest transition-all backdrop-blur-md shadow-2xl hover:scale-105 active:scale-95 cursor-pointer text-center"
+            >
+              <Lock className="w-4 h-4 text-primary" />
+              <span>ADICIONAR ARQUIVOS & LINKS</span>
             </button>
           </div>
         </motion.div>
@@ -953,6 +1436,658 @@ const CTA = () => {
 };
 
 
+// --- Próximos Eventos (Apresentações Futuras do Grupo) ---
+interface UpcomingPresentationItem {
+  id: string;
+  title: string;
+  dateBadge: {
+    day: string;
+    month: string;
+    year: string;
+  };
+  dateText: string;
+  time: string;
+  location: string;
+  address: string;
+  city: string;
+  category: string;
+  description: string;
+  details?: string;
+  entryType: string;
+  status: "Confirmado" | "Programado" | "Recorrente";
+  image: string;
+  mapQuery: string;
+}
+
+const defaultUpcomingPresentations: UpcomingPresentationItem[] = [
+  {
+    id: "festa-rosario-2026",
+    title: "Grande Festa de Nossa Senhora do Rosário e São Benedito",
+    dateBadge: { day: "11-12", month: "OUT", year: "2026" },
+    dateText: "11 e 12 de Outubro de 2026",
+    time: "A partir das 08h00 (Alvorada e Cortejo)",
+    location: "Sede Moçambique Estrela Guia & Ruas do Bairro",
+    address: "Rua do Dólar, 290 — Bairro São Jorge",
+    city: "Uberlândia - MG",
+    category: "Cortejo Tradicional",
+    description: "O momento mais sagrado e esperado das nossas celebrações anuais. O Terno desfila com fardas azul e rosa, bastões, caixas e gungas entoando louvores aos santos protetores e à ancestralidade negra em um grandioso cortejo com mais de 600 participantes.",
+    details: "Traje sugerido: roupas leves ou as cores do terno (azul e rosa). O cortejo percorre as principais ruas do bairro São Jorge com paradas rituais para bênçãos e orações nas casas dos devotos tradicionais.",
+    entryType: "Aberto ao Público / Devoção Popular",
+    status: "Confirmado",
+    image: "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=1200",
+    mapQuery: "Rua do Dólar, 290, São Jorge, Uberlândia, MG"
+  },
+  {
+    id: "consciencia-negra-2026",
+    title: "Cortejo Especial do Dia da Consciência Negra",
+    dateBadge: { day: "20", month: "NOV", year: "2026" },
+    dateText: "20 de Novembro de 2026",
+    time: "15h30",
+    location: "Praça Sérgio Pacheco & Centro Cultural",
+    address: "Av. Afonso Pena, s/n — Centro",
+    city: "Uberlândia - MG",
+    category: "Apresentação Cultural",
+    description: "Apresentação pública e cortejo em celebração à memória de Zumbi dos Palmares e à resistência afro-brasileira, com toques rituais de tambor, gungas ecoando e cânticos de liberdade compartilhados com toda a cidade.",
+    details: "Apresentação especial com participação de mestres da cultura popular do Triângulo Mineiro, seguida por roda de capoeira e feira de saberes afro-mineiros.",
+    entryType: "Entrada Franca na Praça",
+    status: "Confirmado",
+    image: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1200",
+    mapQuery: "Praça Sérgio Pacheco, Uberlândia, MG"
+  },
+  {
+    id: "folia-reis-2027",
+    title: "Tradicional Folia de Reis Estrela Guia",
+    dateBadge: { day: "06", month: "JAN", year: "2027" },
+    dateText: "06 de Janeiro de 2027",
+    time: "17h00",
+    location: "Quartel Moçambique Estrela Guia",
+    address: "Rua do Dólar, 290 — Bairro São Jorge",
+    city: "Uberlândia - MG",
+    category: "Festividade Popular",
+    description: "Celebração do ciclo natalino com o Terno de Reisado visitando os lares da comunidade. Os mestres e capitães entoam versos de fé e bênção ao som de caixas, gungas e violas caipiras.",
+    details: "Cortejo comunitário com cânticos tradicionais de Santos Reis e partilha fraterna entre as famílias do bairro São Jorge.",
+    entryType: "Livre para Toda a Família",
+    status: "Programado",
+    image: "https://images.unsplash.com/photo-1542601906960-daaa2303c990?q=80&w=1200",
+    mapQuery: "Rua do Dólar, 290, São Jorge, Uberlândia, MG"
+  },
+  {
+    id: "encontro-regional-2027",
+    title: "Encontro Regional de Congadas e Moçambiques",
+    dateBadge: { day: "14", month: "MAR", year: "2027" },
+    dateText: "14 de Março de 2027",
+    time: "10h00 às 17h00",
+    location: "Parque do Sabiá (Arena Multiuso)",
+    address: "Av. Anselmo Alves dos Santos, s/n — Tibery",
+    city: "Uberlândia - MG",
+    category: "Apresentação Cultural",
+    description: "Intercâmbio de grupos tradicionais com dezenas de guardas de Congado, Catupé e Moçambique de Minas Gerais e Goiás. O Estrela Guia apresenta a força rítmica dos seus tambores e cantigas centenárias.",
+    details: "Grande encontro com feira cultural, gastronomia tradicional e apresentações contínuas dos grupos tradicionais convidados.",
+    entryType: "Entrada Franca no Parque",
+    status: "Programado",
+    image: "https://i.postimg.cc/BQ6s5pQ4/Whats-App-Image-2026-05-12-at-09-18-41-3.jpg",
+    mapQuery: "Parque do Sabiá, Uberlândia, MG"
+  },
+  {
+    id: "arraia-mocambique-2027",
+    title: "Festa Junina e Arraiá Solidário do Moçambique",
+    dateBadge: { day: "21", month: "JUN", year: "2027" },
+    dateText: "21 de Junho de 2027",
+    time: "A partir das 12h00",
+    location: "Quartel Estrela Guia",
+    address: "Rua do Dólar, 290 — Bairro São Jorge",
+    city: "Uberlândia - MG",
+    category: "Festividade Popular",
+    description: "Festejo comunitário com quadrilha caipira, apresentações musicais convidadas, barracas de comidas típicas e brincadeiras tradicionais. Renda e mantimentos destinados aos projetos sociais do Ponto de Cultura.",
+    details: "Shows ao vivo com Carvalho & Mariano, Grupo Quinteto do Samba e Alberto & Cristiano, além de bingo solidário e comidas típicas.",
+    entryType: "1 kg de Alimento Não Perecível",
+    status: "Programado",
+    image: "https://i.postimg.cc/XJCdncH7/3075998a-3aae-4468-9018-de160d328055.jpg",
+    mapQuery: "Rua do Dólar, 290, São Jorge, Uberlândia, MG"
+  },
+  {
+    id: "oficina-percussao-recorrente",
+    title: "Ensaio Geral Aberto & Vivência de Percussão Ancestral",
+    dateBadge: { day: "SÁB", month: "QUINZENAL", year: "2026/27" },
+    dateText: "1º e 3º Sábado de Cada Mês",
+    time: "16h00 às 18h30",
+    location: "Ponto de Cultura Estrela Guia",
+    address: "Rua do Dólar, 290 — Bairro São Jorge",
+    city: "Uberlândia - MG",
+    category: "Oficinas & Ensaios",
+    description: "Ensaio preparatório aberto para novos integrantes e público geral. Venha conhecer a afinação dos tambores, os passos da marcha do Moçambique e a história de resistência contada em cada cântico.",
+    details: "Instrumentos fornecidos no local pelo projeto. Não é necessária experiência prévia com instrumentos de percussão.",
+    entryType: "Gratuito / Aberto a Iniciantes",
+    status: "Recorrente",
+    image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200",
+    mapQuery: "Rua do Dólar, 290, São Jorge, Uberlândia, MG"
+  }
+];
+
+const UpcomingEventsSection = () => {
+  const [presentations, setPresentations] = useState<UpcomingPresentationItem[]>(defaultUpcomingPresentations);
+  const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedEvent, setSelectedEvent] = useState<UpcomingPresentationItem | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Inscrição em tempo real com o Firestore para carregar eventos dinâmicos caso existam
+  useEffect(() => {
+    const unsubscribe = subscribeToEvents((firestoreEvents) => {
+      if (firestoreEvents && firestoreEvents.length > 0) {
+        // Mapear eventos do firestore que tenham dados customizados
+        const mappedFromFirestore: UpcomingPresentationItem[] = firestoreEvents.map((fe, idx) => {
+          const parts = (fe.date || "").split("/");
+          const dayPart = parts[0] || "DIA";
+          const monthPart = (parts[1] || "MÊS").toUpperCase();
+
+          return {
+            id: fe.id || `firestore-event-${idx}`,
+            title: fe.title,
+            dateBadge: {
+              day: dayPart,
+              month: monthPart,
+              year: "2026"
+            },
+            dateText: fe.date,
+            time: fe.time || "Horário a confirmar",
+            location: fe.location || "Sede Estrela Guia",
+            address: fe.address || "Rua do Dólar, 290, Bairro São Jorge",
+            city: "Uberlândia - MG",
+            category: fe.category || "Apresentação Cultural",
+            description: fe.description || "Apresentação cultural do Terno de Moçambique Estrela Guia com toques de caixa, gungas e cantigas ancestrais da tradição afro-brasileira.",
+            details: fe.description || "Evento oficial da programação cultural do Terno de Moçambique Estrela Guia.",
+            entryType: fe.ticketInfo || "Aberto ao Público",
+            status: (fe.status === "Confirmado" || fe.status === "Recorrente" || fe.status === "Programado") ? fe.status : "Confirmado",
+            image: fe.image || "https://images.unsplash.com/photo-1547427845-12ca7a659779?q=80&w=1200",
+            mapQuery: `${fe.location || "Rua do Dólar, 290"}, Uberlândia - MG`
+          };
+        });
+
+        // Combinar com as apresentações padrões preservando itens únicos por título
+        const existingTitles = new Set(mappedFromFirestore.map(e => e.title.toLowerCase().trim()));
+        const uniqueDefaults = defaultUpcomingPresentations.filter(d => !existingTitles.has(d.title.toLowerCase().trim()));
+        setPresentations([...mappedFromFirestore, ...uniqueDefaults]);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const categories = [
+    "Todos",
+    "Cortejo Tradicional",
+    "Apresentação Cultural",
+    "Festividade Popular",
+    "Oficinas & Ensaios"
+  ];
+
+  const filteredEvents = presentations.filter((ev) => {
+    const matchesCategory = selectedCategory === "Todos" || ev.category === selectedCategory;
+    const matchesSearch =
+      ev.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ev.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ev.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ev.dateText.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  const createGoogleCalendarUrl = (ev: UpcomingPresentationItem) => {
+    const title = encodeURIComponent(`${ev.title} — Moçambique Estrela Guia`);
+    const details = encodeURIComponent(
+      `${ev.description}\n\nLocal: ${ev.location} (${ev.address}, ${ev.city})\nHorário: ${ev.time}\nEntrada: ${ev.entryType}\nOrganização: Terno de Moçambique Estrela Guia`
+    );
+    const location = encodeURIComponent(`${ev.location}, ${ev.address}, ${ev.city}`);
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}`;
+  };
+
+  const createGoogleMapsUrl = (ev: UpcomingPresentationItem) => {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.mapQuery || `${ev.location}, ${ev.address}, ${ev.city}`)}`;
+  };
+
+  const handleCopyDetails = (ev: UpcomingPresentationItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const text = `🌟 Apresentação: ${ev.title}\n📅 Data: ${ev.dateText}\n⏰ Horário: ${ev.time}\n📍 Local: ${ev.location} (${ev.address}, ${ev.city})\n🎟️ Entrada: ${ev.entryType}\nℹ️ ${ev.description}\n\nOrganização: Terno de Moçambique Estrela Guia`;
+    navigator.clipboard.writeText(text);
+    setCopiedId(ev.id);
+    setTimeout(() => setCopiedId(null), 2500);
+  };
+
+  return (
+    <section id="proximos-eventos" className="py-24 md:py-32 px-6 bg-[#0a0a0a] relative overflow-hidden border-t border-white/5">
+      {/* Glow decorativo de fundo */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/5 rounded-full blur-[140px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        {/* Header da Seção */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-14">
+          <div className="space-y-4 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.25em]">
+              <Sparkles className="w-3 h-3 text-primary" />
+              Apresentações & Cortejos
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-white font-display">
+              PRÓXIMOS <span className="text-primary italic">EVENTOS</span>
+            </h2>
+            <p className="text-white/60 text-sm md:text-base leading-relaxed font-light">
+              Acompanhe as próximas apresentações públicas, cortejos tradicionais e encontros culturais do 
+              <span className="text-white font-semibold"> Terno de Moçambique Estrela Guia</span>. Venha celebrar conosco a fé, o som ancestral das caixas e a rica tradição do Congado.
+            </p>
+          </div>
+
+          {/* Quick Counter / Info Badge */}
+          <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/10 shrink-0 self-start md:self-auto">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-xl">
+              {presentations.length}
+            </div>
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-primary block">
+                Calendário Cultural
+              </span>
+              <span className="text-xs text-white/70 font-medium">
+                Apresentações confirmadas e abertas
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Barra de Filtros e Busca */}
+        <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between mb-12">
+          {/* Categorias */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 no-scrollbar">
+            {categories.map((cat) => {
+              const isActive = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
+                    isActive
+                      ? "bg-primary text-black shadow-lg shadow-primary/20 scale-[1.02]"
+                      : "bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/5"
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Campo de Busca Rápida */}
+          <div className="relative min-w-[240px] lg:max-w-xs">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar por evento ou local..."
+              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-primary/50 transition-colors"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white text-xs"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Grid de Cards de Próximos Eventos */}
+        {filteredEvents.length === 0 ? (
+          <div className="p-16 rounded-3xl bg-white/[0.02] border border-white/5 text-center max-w-xl mx-auto space-y-4">
+            <Calendar className="w-12 h-12 text-primary/40 mx-auto" />
+            <h3 className="text-lg font-bold text-white uppercase tracking-tight">Nenhum evento encontrado</h3>
+            <p className="text-white/40 text-xs leading-relaxed">
+              Não encontramos apresentações correspondentes ao filtro selecionado. Tente alterar a categoria ou a busca.
+            </p>
+            <button
+              onClick={() => {
+                setSelectedCategory("Todos");
+                setSearchQuery("");
+              }}
+              className="px-5 py-2 rounded-xl bg-primary/20 text-primary hover:bg-primary hover:text-black font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer"
+            >
+              Ver todas as apresentações
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {filteredEvents.map((ev, index) => {
+              const isCopied = copiedId === ev.id;
+              return (
+                <motion.article
+                  key={ev.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.08, duration: 0.4 }}
+                  className="group bg-white/[0.02] hover:bg-white/[0.04] border border-white/10 hover:border-primary/40 rounded-3xl overflow-hidden flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-primary/5 relative cursor-pointer"
+                  onClick={() => setSelectedEvent(ev)}
+                >
+                  {/* Top Image Banner com Tags Sobrepostas */}
+                  <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-black/50">
+                    <img
+                      src={ev.image}
+                      alt={ev.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a] via-black/40 to-black/30" />
+
+                    {/* Bloco de Data (Ticket Badge Estilizado) */}
+                    <div className="absolute top-4 left-4 z-10 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md border border-primary/30 rounded-2xl px-3 py-2 min-w-[58px] shadow-lg">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-primary leading-none">
+                        {ev.dateBadge.month}
+                      </span>
+                      <span className="text-xl sm:text-2xl font-black text-white leading-tight font-display">
+                        {ev.dateBadge.day}
+                      </span>
+                      <span className="text-[9px] font-mono text-white/50 leading-none">
+                        {ev.dateBadge.year}
+                      </span>
+                    </div>
+
+                    {/* Status Pill */}
+                    <div className="absolute top-4 right-4 z-10">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-md shadow-md ${
+                        ev.status === "Confirmado"
+                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                          : ev.status === "Recorrente"
+                          ? "bg-primary/20 text-primary border border-primary/30"
+                          : "bg-white/10 text-white/80 border border-white/15"
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          ev.status === "Confirmado" ? "bg-emerald-400 animate-pulse" : "bg-primary"
+                        }`} />
+                        {ev.status}
+                      </span>
+                    </div>
+
+                    {/* Categoria do Evento (Floating Pill) */}
+                    <div className="absolute bottom-3 left-4 z-10">
+                      <span className="inline-block px-3 py-1 rounded-lg bg-black/80 backdrop-blur-md border border-white/10 text-primary text-[10px] font-black uppercase tracking-wider">
+                        {ev.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Conteúdo do Card */}
+                  <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
+                    <div className="space-y-3.5">
+                      {/* Título da Apresentação */}
+                      <h3 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight group-hover:text-primary transition-colors line-clamp-2 leading-snug">
+                        {ev.title}
+                      </h3>
+
+                      {/* Metadados: Data e Horário */}
+                      <div className="space-y-2 text-xs">
+                        <div className="flex items-center gap-2 text-white/90 font-medium">
+                          <Calendar className="w-4 h-4 text-primary shrink-0" />
+                          <span>{ev.dateText}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-white/60">
+                          <Clock className="w-4 h-4 text-primary shrink-0" />
+                          <span>{ev.time}</span>
+                        </div>
+                        {/* Local */}
+                        <div className="flex items-start gap-2 text-white/70 pt-0.5">
+                          <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                          <div className="leading-snug">
+                            <span className="text-white font-medium block">{ev.location}</span>
+                            <span className="text-white/40 text-[11px] block">{ev.address}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Breve descrição das apresentações futuras do grupo */}
+                      <div className="pt-2 border-t border-white/5">
+                        <p className="text-white/70 text-xs sm:text-[13px] leading-relaxed line-clamp-3">
+                          {ev.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Badges de Entrada e Acesso */}
+                    <div className="flex items-center justify-between gap-2 pt-2 text-[11px] font-bold">
+                      <span className="inline-flex items-center gap-1.5 text-primary bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-lg">
+                        <Ticket className="w-3 h-3 shrink-0" />
+                        {ev.entryType}
+                      </span>
+                      <span className="text-white/40 uppercase tracking-widest text-[10px]">
+                        {ev.city}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Rodapé de Ações do Card */}
+                  <div 
+                    className="px-6 py-4 bg-white/[0.01] border-t border-white/5 flex items-center justify-between gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Botão Ver Detalhes */}
+                    <button
+                      onClick={() => setSelectedEvent(ev)}
+                      className="text-xs font-bold uppercase tracking-wider text-white hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      Detalhes
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Grupo de Ações Rápidas */}
+                    <div className="flex items-center gap-1.5">
+                      {/* Copiar Informações */}
+                      <button
+                        onClick={(e) => handleCopyDetails(ev, e)}
+                        title={isCopied ? "Copiado!" : "Copiar detalhes do evento"}
+                        className={`p-2 rounded-xl border text-xs transition-all cursor-pointer ${
+                          isCopied
+                            ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
+                            : "bg-white/5 border-white/10 text-white/70 hover:text-white hover:bg-white/10"
+                        }`}
+                      >
+                        {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+
+                      {/* Abrir Google Maps */}
+                      <a
+                        href={createGoogleMapsUrl(ev)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Ver local no Google Maps"
+                        className="p-2 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-primary hover:bg-primary/10 hover:border-primary/20 transition-all cursor-pointer"
+                      >
+                        <Navigation className="w-3.5 h-3.5" />
+                      </a>
+
+                      {/* Adicionar ao Google Agenda */}
+                      <a
+                        href={createGoogleCalendarUrl(ev)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Salvar no Google Agenda"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-primary text-black hover:bg-amber-400 font-black uppercase text-[10px] tracking-wider transition-all shadow-md cursor-pointer"
+                      >
+                        <CalendarPlus className="w-3.5 h-3.5 shrink-0" />
+                        <span className="hidden sm:inline">Agenda</span>
+                      </a>
+                    </div>
+                  </div>
+                </motion.article>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Banner Inferior: Convite para Contratação e Participação */}
+        <div className="mt-16 p-8 md:p-10 rounded-3xl bg-linear-to-r from-white/[0.03] to-primary/5 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-center md:text-left">
+            <h4 className="text-lg md:text-xl font-black uppercase text-white tracking-tight flex items-center justify-center md:justify-start gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              Deseja convidar o Estrela Guia para sua cidade ou evento?
+            </h4>
+            <p className="text-white/60 text-xs md:text-sm font-light leading-relaxed max-w-2xl">
+              Realizamos apresentações em festivais culturais, cortejos de congado, eventos corporativos sociais, palestras e vivências em escolas e universidades.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <a
+              href="mailto:contato@estrelaguia.org?subject=Convite%20para%20Apresenta%C3%A7%C3%A3o%20-%20Mo%C3%A7ambique%20Estrela%20Guia"
+              className="px-6 py-3 rounded-2xl bg-primary hover:bg-amber-400 text-black font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-primary/20 cursor-pointer"
+            >
+              Falar com a Produção
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal de Detalhes Completos do Evento */}
+      <AnimatePresence>
+        {selectedEvent && (
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+            onClick={() => setSelectedEvent(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl bg-[#0f0f0f] border border-white/15 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header Image do Modal */}
+              <div className="relative h-48 sm:h-56 w-full shrink-0">
+                <img
+                  src={selectedEvent.image}
+                  alt={selectedEvent.title}
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-linear-to-t from-[#0f0f0f] via-black/50 to-transparent" />
+                
+                {/* Fechar */}
+                <button
+                  onClick={() => setSelectedEvent(null)}
+                  className="absolute top-4 right-4 p-2 rounded-full bg-black/70 hover:bg-black text-white/80 hover:text-white border border-white/10 transition-colors cursor-pointer z-10"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {/* Badge de categoria flutuante */}
+                <div className="absolute bottom-4 left-6 flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full bg-primary text-black font-black text-[10px] uppercase tracking-wider">
+                    {selectedEvent.category}
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-white font-bold text-[10px] uppercase tracking-wider border border-white/10">
+                    {selectedEvent.status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Corpo do Modal com Scroll */}
+              <div className="p-6 sm:p-8 overflow-y-auto space-y-6 flex-1">
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight leading-tight mb-2">
+                    {selectedEvent.title}
+                  </h3>
+                  <p className="text-primary text-xs font-bold uppercase tracking-wider">
+                    Terno de Moçambique Estrela Guia
+                  </p>
+                </div>
+
+                {/* Grid de Informações Chave */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-white/40 tracking-wider flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-primary" /> Data & Horário
+                    </span>
+                    <p className="text-xs font-black text-white">{selectedEvent.dateText}</p>
+                    <p className="text-[11px] text-white/60">{selectedEvent.time}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-white/40 tracking-wider flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-primary" /> Local & Endereço
+                    </span>
+                    <p className="text-xs font-black text-white">{selectedEvent.location}</p>
+                    <p className="text-[11px] text-white/60">{selectedEvent.address}, {selectedEvent.city}</p>
+                  </div>
+                </div>
+
+                {/* Descrição Detalhada da Apresentação */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-black uppercase text-primary tracking-widest">
+                    Sobre a Apresentação
+                  </h4>
+                  <p className="text-white/80 text-xs sm:text-sm leading-relaxed">
+                    {selectedEvent.description}
+                  </p>
+                </div>
+
+                {/* Recomendações e Informações Adicionais */}
+                {selectedEvent.details && (
+                  <div className="space-y-2 p-4 rounded-2xl bg-primary/5 border border-primary/20">
+                    <h4 className="text-[11px] font-black uppercase text-primary tracking-wider flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5" /> Orientações para a Comunidade
+                    </h4>
+                    <p className="text-white/70 text-xs leading-relaxed">
+                      {selectedEvent.details}
+                    </p>
+                    <div className="pt-2 text-[11px] text-white/60 font-medium">
+                      🎟️ Entrada: <span className="text-white font-bold">{selectedEvent.entryType}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Ações do Modal */}
+              <div className="p-4 sm:p-6 bg-black/60 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <button
+                  onClick={() => handleCopyDetails(selectedEvent)}
+                  className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs uppercase tracking-wider border border-white/10 transition-colors flex items-center gap-2 cursor-pointer"
+                >
+                  {copiedId === selectedEvent.id ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span>Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Copiar Informações</span>
+                    </>
+                  )}
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <a
+                    href={createGoogleMapsUrl(selectedEvent)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Navigation className="w-4 h-4 text-primary" />
+                    Como Chegar
+                  </a>
+                  <a
+                    href={createGoogleCalendarUrl(selectedEvent)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-2.5 rounded-xl bg-primary hover:bg-amber-400 text-black font-black text-xs uppercase tracking-wider transition-colors shadow-lg shadow-primary/20 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <CalendarPlus className="w-4 h-4" />
+                    Salvar na Agenda
+                  </a>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </section>
+  );
+};
+
+
 const Agenda = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const initialEvents = [
@@ -1156,7 +2291,7 @@ const galleries = [
     title: "Fotos dos eventos realizados – Instrumento nº 977307",
     date: "Instrumento nº 977307",
     location: "Sede Moçambique Estrela Guia",
-    cover: "https://drive.google.com/thumbnail?id=1zCjw-1WNKZUeplKMDh435YmJEVT9GGLj&sz=w1000",
+    cover: "https://lh3.googleusercontent.com/d/1zCjw-1WNKZUeplKMDh435YmJEVT9GGLj=w1000",
     description: "Registros fotográficos das atividades culturais realizadas no âmbito do projeto, para comprovação da execução física e transparência das ações vinculadas ao Instrumento nº 977307.",
     images: [
       "https://drive.google.com/file/d/1zCjw-1WNKZUeplKMDh435YmJEVT9GGLj/view?usp=sharing",
@@ -1173,7 +2308,7 @@ const galleries = [
     title: "Pagode com Feijoada",
     date: "Confraternização Cultural",
     location: "Quartel Moçambique Estrela Guia - Rua do Dólar, 290 — São Jorge",
-    cover: "https://drive.google.com/thumbnail?id=19FyHebMAZby1r41fRaVMN37hGVd-txuU&sz=w1000",
+    cover: "https://lh3.googleusercontent.com/d/19FyHebMAZby1r41fRaVMN37hGVd-txuU=w1000",
     description: "Tradicional Pagode com Feijoada no Quartel do Moçambique Estrela Guia. Encontro festivo de confraternização, gastronomia e samba com a comunidade, celebrando a cultura popular com muita música, alegria e união.",
     images: [
       "https://drive.google.com/file/d/19FyHebMAZby1r41fRaVMN37hGVd-txuU/view?usp=sharing",
@@ -1670,7 +2805,7 @@ Chame a família, os amigos e venha festejar com a gente! 🌻🔥`,
     modalidade: "Execução do Projeto / Registro Fotográfico",
     date: "Instrumento nº 977307",
     location: "Sede Moçambique Estrela Guia",
-    cover: "https://drive.google.com/thumbnail?id=1zCjw-1WNKZUeplKMDh435YmJEVT9GGLj&sz=w1000",
+    cover: "https://lh3.googleusercontent.com/d/1zCjw-1WNKZUeplKMDh435YmJEVT9GGLj=w1000",
     description: "Registros fotográficos das atividades culturais realizadas no âmbito do projeto, para comprovação da execução física e transparência das ações vinculadas ao Instrumento nº 977307.",
     galleryId: 8
   },
@@ -1680,7 +2815,7 @@ Chame a família, os amigos e venha festejar com a gente! 🌻🔥`,
     modalidade: "Confraternização / Gastronomia e Samba",
     date: "Confraternização Cultural",
     location: "Quartel Moçambique Estrela Guia — Rua do Dólar, 290, São Jorge",
-    cover: "https://drive.google.com/thumbnail?id=19FyHebMAZby1r41fRaVMN37hGVd-txuU&sz=w1000",
+    cover: "https://lh3.googleusercontent.com/d/19FyHebMAZby1r41fRaVMN37hGVd-txuU=w1000",
     description: "Tradicional Pagode com Feijoada no Quartel do Moçambique Estrela Guia. Um encontro festivo e comunitário recheado de samba, gastronomia típica e celebração cultural, fortalecendo a união dos moradores e amigos do Terno.",
     galleryId: 9
   }
@@ -1851,18 +2986,46 @@ const ShowsEventosPage = ({
 };
 
 // --- Reusable Global Lightbox Modal ---
+const VIDEO_DRIVE_IDS = [
+  "1fb0XTgYjm6Q8lwbk_TnTfBR6SeUeodtq",
+  "1RGESiFfQyjzIbPecuAF_mpA68UruO3g0",
+  "14DVFafrB9xmJuCHDZciQrZ6ziHa1djPu",
+  "15gvlxD_yTIt-4_N2Uyn3fX9T8pgBlQOW",
+  "1HrFus24gjej45p0Yd2DO1nEQuXokJg74",
+  "1fFdYOU7k51sSlQ6s1QeyicwZdIfG0Eiy",
+  "1EgHuTTvIF_KBdNyPsCRqpIY3kMWgubcg",
+  "1HEJrcS-3P2HCMT5Bshxgf91pOoKzMv-X",
+  "1AXgQv4zoMt-P95xEH9nb48pP2o6luquB",
+  "1aSVAubaZXvhY9I3H_YPVOW-RgL1Vq1Bv",
+  "1lncWWJ-Fcd17v7xAJmEz1Suwgj6ddn3G"
+];
+
 const isVideoUrl = (url: string) => {
-  return url.includes("drive.google.com") || url.endsWith(".mp4") || url.includes("video");
+  if (url.endsWith(".mp4") || url.includes(".mp4") || url.includes("/video/")) return true;
+  return VIDEO_DRIVE_IDS.some(id => url.includes(id));
 };
 
 const isHorizontalVideo = (url: string) => {
   return url.includes("1fFdYOU7k51sSlQ6s1QeyicwZdIfG0Eiy") || url.includes("horizontal");
 };
 
-const getGoogleDriveEmbedUrl = (url: string) => {
-  const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (match && match[1]) {
-    return `https://drive.google.com/file/d/${match[1]}/preview`;
+const getMediaDisplayUrl = (url: string) => {
+  if (isVideoUrl(url)) {
+    const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      return `https://drive.google.com/file/d/${match[1]}/preview`;
+    }
+    return url;
+  }
+  
+  // Format Google Drive photo URLs directly to crisp direct CDN images
+  const matchFile = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (matchFile && matchFile[1]) {
+    return `https://lh3.googleusercontent.com/d/${matchFile[1]}=w1600`;
+  }
+  const matchThumb = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (matchThumb && matchThumb[1]) {
+    return `https://lh3.googleusercontent.com/d/${matchThumb[1]}=w1600`;
   }
   return url;
 };
@@ -1885,6 +3048,10 @@ const LightboxModal = ({
 
   const activeGallery = galleries.find(g => g.id === selectedGalleryId);
   if (!activeGallery) return null;
+
+  const currentRawUrl = activeGallery.images[currentImageIndex];
+  const displayUrl = getMediaDisplayUrl(currentRawUrl);
+  const isVideo = isVideoUrl(currentRawUrl);
 
   const handleDownload = async (imageUrl: string) => {
     try {
@@ -1919,138 +3086,179 @@ const LightboxModal = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[160] bg-black/98 md:backdrop-blur-3xl flex items-center justify-center"
+        className="fixed inset-0 z-[160] bg-black/95 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6"
         onClick={onClose}
       >
-        <div className="absolute top-6 left-6 lg:top-10 lg:left-10 z-20 bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/5 max-w-xs md:max-w-md">
-          <span className="text-primary text-[10px] font-black uppercase tracking-[0.4em] mb-1 block">{activeGallery.date}</span>
-          <h2 className="text-lg lg:text-2xl font-black text-white uppercase tracking-tighter truncate">{activeGallery.title}</h2>
-          <div className="flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1 mb-2">
-            <MapPin className="w-3 h-3 text-primary" /> {activeGallery.location}
-          </div>
-          {isVideoUrl(activeGallery.images[currentImageIndex]) ? (
-            <span className="bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full inline-flex items-center gap-1">
-              <Video className="w-3 h-3 shrink-0" /> Vídeo do Evento
-            </span>
-          ) : (
-            <span className="bg-white/10 text-white/70 border border-white/5 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full inline-flex items-center gap-1">
-              <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" fillRule="evenodd" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              Foto do Evento
-            </span>
-          )}
-        </div>
+        <div 
+          className="event-modal-container relative w-full max-w-4xl bg-[#0d0d0d] border border-white/10 rounded-3xl shadow-2xl p-4 sm:p-5 flex flex-col items-stretch justify-center gap-2.5 my-auto max-h-[94vh] overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* HEADER BAR - Compact title & details */}
+          <div className="flex items-center justify-between gap-3 pb-2 border-b border-white/10 shrink-0">
+            <div className="flex-1 min-w-0 pr-1">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <span className="text-primary text-[10px] font-black uppercase tracking-[0.2em] bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-full">
+                  {activeGallery.date}
+                </span>
+                <span className="text-white/50 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-primary shrink-0" />
+                  <span className="truncate">{activeGallery.location}</span>
+                </span>
+                {isVideo ? (
+                  <span className="bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                    <Video className="w-3 h-3 shrink-0" /> Vídeo
+                  </span>
+                ) : (
+                  <span className="bg-white/10 text-white/70 border border-white/5 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                    Foto
+                  </span>
+                )}
+              </div>
+              <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-tight truncate">
+                {activeGallery.title}
+              </h2>
+            </div>
 
-        <div className="absolute top-6 right-6 lg:top-10 lg:right-10 z-20 flex gap-3">
-          <motion.button
-            whileHover={{ scale: 1.1, backgroundColor: "rgba(255,165,0,0.2)" }}
-            whileActive={{ scale: 0.9 }}
-            className="p-4 border border-white/10 rounded-full text-white bg-black/40 backdrop-blur-md transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              const url = activeGallery.images[currentImageIndex];
-              if (isVideoUrl(url)) {
-                window.open(url, '_blank');
-              } else {
-                handleDownload(url);
-              }
-            }}
-            title={isVideoUrl(activeGallery.images[currentImageIndex]) ? "Abrir no Google Drive" : "Download Imagem"}
-          >
-            {isVideoUrl(activeGallery.images[currentImageIndex]) ? (
-              <ExternalLink className="w-5 h-5 lg:w-6 lg:h-6" />
-            ) : (
-              <Download className="w-5 h-5 lg:w-6 lg:h-6" />
-            )}
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.1)" }}
-            whileActive={{ scale: 0.9 }}
-            className="p-4 border border-white/10 rounded-full text-white bg-black/40 backdrop-blur-md transition-colors"
-            onClick={onClose}
-            title="Fechar"
-          >
-            <X className="w-5 h-5 lg:w-6 lg:h-6" />
-          </motion.button>
-        </div>
-        
-        {/* Main interactive area */}
-        <div className="relative w-full h-full flex items-center justify-center">
-          <button 
-            onClick={prevImage}
-            className="absolute left-4 lg:left-8 p-4 text-white hover:text-primary transition-all z-35 bg-black/20 hover:bg-black/40 rounded-full backdrop-blur-sm"
-          >
-            <ChevronRight className="w-6 h-6 lg:w-12 lg:h-12 rotate-180" />
-          </button>
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentImageIndex}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              transition={{ duration: 0.3 }}
-              className="w-full h-full flex items-center justify-center p-4 lg:p-12"
-            >
-              {isVideoUrl(activeGallery.images[currentImageIndex]) ? (
-                <div 
-                  className={
-                    isHorizontalVideo(activeGallery.images[currentImageIndex])
-                      ? "relative w-[min(90vw,800px)] md:w-[min(85vw,960px)] aspect-[16/9] rounded-3xl overflow-hidden border border-white/10 bg-black shadow-[0_0_100px_rgba(255,165,0,0.2)] flex items-center justify-center"
-                      : "relative w-[min(90vw,360px)] md:w-[min(85vw,420px)] aspect-[9/16] rounded-3xl overflow-hidden border border-white/10 bg-black shadow-[0_0_100px_rgba(255,165,0,0.2)] flex items-center justify-center"
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 shrink-0">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 border border-white/10 rounded-xl text-white bg-white/5 hover:bg-primary hover:text-black transition-colors cursor-pointer"
+                onClick={() => {
+                  if (isVideo) {
+                    window.open(currentRawUrl, '_blank');
+                  } else {
+                    handleDownload(displayUrl);
                   }
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <iframe
-                    src={getGoogleDriveEmbedUrl(activeGallery.images[currentImageIndex])}
-                    className="w-full h-full border-0 absolute inset-0"
-                    allow="autoplay; encrypted-media"
-                    allowFullScreen
-                  />
-                </div>
-              ) : (
-                <img
-                  src={activeGallery.images[currentImageIndex]}
-                  alt={`Foto ${currentImageIndex + 1}`}
-                  className="max-w-full max-h-[75vh] md:max-h-[85vh] object-contain shadow-[0_0_100px_rgba(0,0,0,0.8)] rounded-lg animate-fade-in"
-                  referrerPolicy="no-referrer"
-                  onClick={(e) => e.stopPropagation()}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
-
-          <button 
-            onClick={nextImage}
-            className="absolute right-4 lg:right-8 p-4 text-white hover:text-primary transition-all z-35 bg-black/20 hover:bg-black/40 rounded-full backdrop-blur-sm"
-          >
-            <ChevronRight className="w-6 h-6 lg:w-12 lg:h-12" />
-          </button>
-        </div>
-
-        {/* Pagination overlay */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-6 z-20 bg-black/50 backdrop-blur-xl px-6 py-3 rounded-full border border-white/5">
-          <div className="flex gap-1.5">
-            {activeGallery.images.map((_, i) => (
-              <button
-                key={i}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentImageIndex(i);
                 }}
-                className={`h-1 transition-all duration-500 rounded-full ${
-                  i === currentImageIndex 
-                    ? "w-6 bg-primary shadow-[0_0_10px_rgba(255,165,0,0.5)]" 
-                    : "w-2 bg-white/20 hover:bg-white/40"
-                }`}
-              />
-            ))}
+                title={isVideo ? "Abrir no Google Drive" : "Download Imagem"}
+              >
+                {isVideo ? <ExternalLink className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 border border-white/10 rounded-xl text-white bg-white/5 hover:bg-white/20 transition-colors cursor-pointer"
+                onClick={onClose}
+                title="Fechar"
+              >
+                <X className="w-4 h-4" />
+              </motion.button>
+            </div>
           </div>
-          <div className="w-px h-3 bg-white/10" />
-          <div className="text-white/40 font-mono text-[10px] uppercase tracking-widest">
-            {currentImageIndex + 1} / {activeGallery.images.length}
+
+          {/* Event description textual content */}
+          {activeGallery.description && (
+            <p className="text-white/70 text-xs leading-relaxed line-clamp-2 shrink-0">
+              {activeGallery.description}
+            </p>
+          )}
+
+          {/* CENTER MEDIA DISPLAY CONTAINER - Fixed max height carousel to avoid vertical empty space */}
+          <div className="carousel relative w-full flex items-center justify-center bg-black/90 rounded-2xl border border-white/5 overflow-hidden group h-[300px] max-h-[300px] shrink">
+            {/* Prev/Next Navigation Overlay */}
+            {activeGallery.images.length > 1 && (
+              <>
+                <button 
+                  onClick={prevImage}
+                  className="absolute left-2.5 z-30 p-2 text-white hover:text-primary bg-black/75 hover:bg-black/95 rounded-full border border-white/10 transition-all backdrop-blur-md shadow-lg cursor-pointer"
+                  title="Anterior"
+                >
+                  <ChevronRight className="w-5 h-5 rotate-180" />
+                </button>
+                <button 
+                  onClick={nextImage}
+                  className="absolute right-2.5 z-30 p-2 text-white hover:text-primary bg-black/75 hover:bg-black/95 rounded-full border border-white/10 transition-all backdrop-blur-md shadow-lg cursor-pointer"
+                  title="Próximo"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </>
+            )}
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentImageIndex}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.02 }}
+                transition={{ duration: 0.2 }}
+                className="w-full h-full flex items-center justify-center p-1"
+              >
+                {isVideo ? (
+                  <div className={
+                    isHorizontalVideo(currentRawUrl)
+                      ? "relative w-full max-w-[720px] aspect-[16/9] rounded-xl overflow-hidden border border-white/10 bg-black flex items-center justify-center max-h-[280px]"
+                      : "relative h-full max-h-[280px] aspect-[9/16] rounded-xl overflow-hidden border border-white/10 bg-black flex items-center justify-center"
+                  }>
+                    <iframe
+                      src={displayUrl}
+                      className="w-full h-full border-0 absolute inset-0 object-contain"
+                      allow="autoplay; encrypted-media"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : (
+                  <img
+                    src={displayUrl}
+                    alt={`Foto ${currentImageIndex + 1}`}
+                    className="max-w-full max-h-[285px] h-full object-contain rounded-xl shadow-xl"
+                    style={{ objectFit: 'contain' }}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.dataset.fallback) {
+                        target.dataset.fallback = "true";
+                        const match = currentRawUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                        if (match && match[1]) {
+                          target.src = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1600`;
+                        }
+                      }
+                    }}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* BOTTOM PASSADOR DE IMAGEM (PAGINATION & CONTROLS) - Directly below media */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 border-t border-white/10 text-xs shrink-0">
+            <div className="text-white/60 font-mono text-[11px] font-bold uppercase tracking-wider">
+              Item <span className="text-primary font-black">{currentImageIndex + 1}</span> de <span className="text-white">{activeGallery.images.length}</span>
+            </div>
+
+            {/* Indicator Dots */}
+            <div className="flex items-center gap-1.5 max-w-[60vw] overflow-x-auto py-0.5 px-2 no-scrollbar">
+              {activeGallery.images.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentImageIndex(i)}
+                  className={`h-1.5 transition-all duration-300 rounded-full shrink-0 cursor-pointer ${
+                    i === currentImageIndex 
+                      ? "w-6 bg-primary shadow-[0_0_10px_rgba(255,165,0,0.5)]" 
+                      : "w-2 bg-white/20 hover:bg-white/40"
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Quick Control Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={prevImage}
+                className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/80 hover:text-white hover:bg-white/10 font-bold uppercase text-[10px] tracking-wider transition-colors cursor-pointer"
+              >
+                Anterior
+              </button>
+              <button
+                onClick={nextImage}
+                className="px-3 py-1.5 rounded-xl bg-primary text-black hover:bg-amber-400 font-black uppercase text-[10px] tracking-wider transition-colors shadow-md cursor-pointer"
+              >
+                Próximo
+              </button>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -2064,12 +3272,70 @@ export default function EstrelaGuiaSite() {
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isDonationOpen, setIsDonationOpen] = useState(false);
   const [isImpactReportOpen, setIsImpactReportOpen] = useState(false);
-  const [activePdf, setActivePdf] = useState<{ url: string; title: string } | null>(null);
+  const [activePdf, setActivePdf] = useState<{ url: string; title: string; docId?: string } | null>(null);
   const [currentView, setCurrentView] = useState<"home" | "transparency" | "shows">("home");
   const [selectedGalleryId, setSelectedGalleryId] = useState<number | null>(null);
 
-  const openPdf = (url: string, title: string) => {
-    setActivePdf({ url, title });
+  const [docs, setDocs] = useState<TransparencyDoc[]>(() => {
+    const saved = localStorage.getItem("estrela_guia_documents_config");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const hasOficio = parsed.some(d => 
+            d.id === "oficio-332" || 
+            d.id === "emenda-parlamentar" || 
+            d.id === "oficio" ||
+            d.name.toLowerCase().includes("332") || 
+            d.name.toLowerCase().includes("emenda")
+          );
+
+          const updated = parsed.map(d => {
+            if (
+              d.id === "oficio-332" || 
+              d.id === "emenda-parlamentar" || 
+              d.id === "oficio" ||
+              d.name.toLowerCase().includes("332") || 
+              d.name.toLowerCase().includes("emenda")
+            ) {
+              return {
+                ...d,
+                id: "oficio-332",
+                name: "OFÍCIO Nº 332/2026 - EMENDA PARLAMENTAR 2026",
+                link: "/SEI_3158555_Oficio_332.pdf",
+                backupLink: "https://drive.google.com/file/d/1wgwjiPAtaazA_-AsTgjznhci819qMMka/view?usp=sharing",
+                desc: "",
+                tag: "Ofício SEI • MinC"
+              };
+            }
+            return d;
+          });
+
+          if (!hasOficio) {
+            return [DEFAULT_DOCUMENTS[0], ...updated];
+          }
+          return updated;
+        }
+      } catch (e) {}
+    }
+    return DEFAULT_DOCUMENTS;
+  });
+
+  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+  const [isDocManagerOpen, setIsDocManagerOpen] = useState(false);
+
+  const handleSaveDocs = (newDocs: TransparencyDoc[]) => {
+    setDocs(newDocs);
+    localStorage.setItem("estrela_guia_documents_config", JSON.stringify(newDocs));
+  };
+
+  const handleResetDocs = () => {
+    setDocs(DEFAULT_DOCUMENTS);
+    localStorage.removeItem("estrela_guia_documents_config");
+  };
+
+  const openPdf = (url: string, title: string, docId?: string) => {
+    setActivePdf({ url, title, docId });
   };
 
   const handleOpenTransparency = () => {
@@ -2097,12 +3363,16 @@ export default function EstrelaGuiaSite() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Hero onOpenDocuments={handleOpenTransparency} />
+              <Hero 
+                onOpenDocuments={handleOpenTransparency} 
+                onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
+              />
               <Features />
               <AboutSection onOpenImpactReport={() => setIsImpactReportOpen(true)} />
               <CounterSection />
               <ProjectsSection />
               <VideoSection />
+              <UpcomingEventsSection />
               <Gallery onOpenGallery={(id) => setSelectedGalleryId(id)} />
               <Agenda />
               <Interactivity onOpenComments={() => setIsCommentsOpen(true)} />
@@ -2113,7 +3383,13 @@ export default function EstrelaGuiaSite() {
           )}
 
           {currentView === "transparency" && (
-            <TransparencyPortal key="transparency" onBack={() => setCurrentView("home")} onViewPdf={openPdf} />
+            <TransparencyPortal 
+              key="transparency" 
+              docs={docs} 
+              onBack={() => setCurrentView("home")} 
+              onViewPdf={openPdf}
+              onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
+            />
           )}
 
           {currentView === "shows" && (
@@ -2134,10 +3410,26 @@ export default function EstrelaGuiaSite() {
         onClose={() => setActivePdf(null)} 
         url={activePdf?.url || ""} 
         title={activePdf?.title || ""} 
+        docId={activePdf?.docId}
       />
       <LightboxModal 
         selectedGalleryId={selectedGalleryId} 
         onClose={() => setSelectedGalleryId(null)} 
+      />
+      <AdminLoginModal
+        isOpen={isAdminLoginOpen}
+        onClose={() => setIsAdminLoginOpen(false)}
+        onSuccess={() => {
+          setIsAdminLoginOpen(false);
+          setIsDocManagerOpen(true);
+        }}
+      />
+      <DocumentManagerModal
+        isOpen={isDocManagerOpen}
+        onClose={() => setIsDocManagerOpen(false)}
+        docs={docs}
+        onSaveDocs={handleSaveDocs}
+        onResetDocs={handleResetDocs}
       />
     </div>
   );

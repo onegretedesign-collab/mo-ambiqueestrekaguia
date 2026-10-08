@@ -36,7 +36,14 @@ export interface Event {
   title: string;
   location: string;
   status: string;
-  order: number;
+  order?: number;
+  description?: string;
+  time?: string;
+  category?: string;
+  image?: string;
+  address?: string;
+  highlighted?: boolean;
+  ticketInfo?: string;
 }
 
 export const subscribeToEvents = (callback: (events: Event[]) => void) => {
