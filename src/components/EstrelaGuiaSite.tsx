@@ -141,6 +141,14 @@ const CommentModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
   );
 };
 
+const PLANEJAMENTO_PAGES = Array.from({ length: 36 }, (_, i) => `/previews/planejamento-2026/page-${i + 1}.jpg`);
+
+const TERMO_FOMENTO_PAGES = [
+  "/previews/termo-fomento/page-1.jpg",
+  "/previews/termo-fomento/page-2.jpg",
+  "/previews/termo-fomento/page-3.jpg",
+];
+
 const DOCUMENT_PREVIEWS: Record<string, string[]> = {
   oficio: [
     "/previews/oficio/page-1.jpg",
@@ -150,14 +158,16 @@ const DOCUMENT_PREVIEWS: Record<string, string[]> = {
     "/previews/oficio/page-1.jpg",
     "/previews/oficio/page-2.jpg",
   ],
+  "planejamento-2026": PLANEJAMENTO_PAGES,
+  planejamento: PLANEJAMENTO_PAGES,
+  "termo-fomento-998200": TERMO_FOMENTO_PAGES,
+  "termo-fomento": TERMO_FOMENTO_PAGES,
+  "transparencia-fomento": TERMO_FOMENTO_PAGES,
   "emenda-parlamentar": [
     "/previews/oficio/page-1.jpg",
     "/previews/oficio/page-2.jpg",
   ],
-  transparencia: [
-    "/previews/oficio/page-1.jpg",
-    "/previews/oficio/page-2.jpg",
-  ],
+  transparencia: TERMO_FOMENTO_PAGES,
   estatuto: [
     "/previews/estatuto/page-1.jpg",
     "/previews/estatuto/page-2.jpg",
@@ -170,10 +180,38 @@ const DOCUMENT_PREVIEWS: Record<string, string[]> = {
   ata: ["/previews/ata-eleicao/page-1.jpg"],
   cnpj: ["/previews/cnpj/page-1.jpg"],
   certidoes: ["/previews/certidoes/page-1.jpg"],
-  planejamento: [
-    "/previews/planejamento/page-1.jpg",
-    "/previews/planejamento/page-2.jpg",
-  ],
+};
+
+const isTermoFomentoDoc = (url: string, title: string, docId?: string): boolean => {
+  const lowUrl = (url || "").toLowerCase();
+  const lowTitle = (title || "").toLowerCase();
+  const lowId = (docId || "").toLowerCase();
+
+  return (
+    lowId === "termo-fomento-998200" ||
+    lowId === "termo-fomento" ||
+    lowId === "transparencia-fomento" ||
+    lowTitle.includes("998200") ||
+    lowTitle.includes("termo de fomento") ||
+    lowUrl.includes("998200") ||
+    lowUrl.includes("termo_fomento") ||
+    lowUrl.includes("termo-fomento") ||
+    lowUrl.includes("1f47_6ifo9z5se_4lgedtmrk3aw2snt_7")
+  );
+};
+
+const isPlanejamentoDoc = (url: string, title: string, docId?: string): boolean => {
+  const lowUrl = (url || "").toLowerCase();
+  const lowTitle = (title || "").toLowerCase();
+  const lowId = (docId || "").toLowerCase();
+
+  return (
+    lowId === "planejamento" ||
+    lowId === "planejamento-2026" ||
+    lowTitle.includes("planejamento") ||
+    lowUrl.includes("planejamento") ||
+    lowUrl.includes("19i_zhmi")
+  );
 };
 
 const isOficio332Doc = (url: string, title: string, docId?: string): boolean => {
@@ -185,7 +223,6 @@ const isOficio332Doc = (url: string, title: string, docId?: string): boolean => 
     lowId === "oficio" ||
     lowId === "oficio-332" ||
     lowId === "emenda-parlamentar" ||
-    lowId === "transparencia" ||
     lowTitle.includes("332") ||
     lowTitle.includes("ofício") ||
     lowTitle.includes("oficio") ||
@@ -193,14 +230,19 @@ const isOficio332Doc = (url: string, title: string, docId?: string): boolean => 
     lowUrl.includes("332") ||
     lowUrl.includes("oficio") ||
     lowUrl.includes("sei_3158555") ||
-    lowUrl.includes("1wgwji") ||
-    lowUrl.includes("emenda")
+    lowUrl.includes("1wgwji")
   );
 };
 
 const getDocumentPreviewPages = (url: string, title: string, docId?: string): string[] | null => {
   if (docId && DOCUMENT_PREVIEWS[docId]) {
     return DOCUMENT_PREVIEWS[docId];
+  }
+  if (isTermoFomentoDoc(url, title, docId)) {
+    return TERMO_FOMENTO_PAGES;
+  }
+  if (isPlanejamentoDoc(url, title, docId)) {
+    return PLANEJAMENTO_PAGES;
   }
   if (isOficio332Doc(url, title, docId)) {
     return DOCUMENT_PREVIEWS.oficio;
@@ -248,19 +290,63 @@ const PdfViewerModal = ({
   if (!isOpen) return null;
 
   const isOficio = isOficio332Doc(url, title, docId);
+  const isPlanejamento = isPlanejamentoDoc(url, title, docId);
+  const isTermoFomento = isTermoFomentoDoc(url, title, docId);
+  const isSpecialDoc = isOficio || isPlanejamento || isTermoFomento;
   const [zoom, setZoom] = useState(100);
   const previewPages = getDocumentPreviewPages(url, title, docId);
   const driveInfo = parseDriveUrl(url);
   const isDrive = isDriveUrl(url);
   
-  const effectiveDownloadUrl = isOficio 
-    ? "/SEI_3158555_Oficio_332.pdf" 
-    : (driveInfo ? driveInfo.downloadUrl : url);
-  const effectiveViewUrl = isOficio 
-    ? "/SEI_3158555_Oficio_332.pdf" 
-    : (driveInfo ? driveInfo.viewUrl : url);
-  const displayUrl = driveInfo ? driveInfo.previewUrl : (isOficio ? "/SEI_3158555_Oficio_332.pdf" : url);
-  const displayTitle = isOficio ? "OFÍCIO Nº 332/2026 - EMENDA PARLAMENTAR 2026" : title;
+  const effectiveDownloadUrl = isPlanejamento
+    ? "/planejamento-do-projeto-2026.pdf"
+    : (isOficio 
+      ? "/SEI_3158555_Oficio_332.pdf" 
+      : (isTermoFomento
+        ? "/Transparencia_Termo_Fomento_998200_2026_Estrela_Guia.pdf"
+        : (driveInfo ? driveInfo.downloadUrl : url)));
+
+  const effectiveDownloadFileName = isPlanejamento
+    ? "Planejamento-do-Projeto-2026-Estrela-Guia.pdf"
+    : (isOficio 
+      ? "SEI_3158555_Oficio_332.pdf" 
+      : (isTermoFomento
+        ? "Transparencia_Termo_Fomento_998200_2026_Estrela_Guia.pdf"
+        : `${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}.pdf`));
+
+  const effectiveViewUrl = isPlanejamento
+    ? "/planejamento-do-projeto-2026.pdf"
+    : (isOficio 
+      ? "/SEI_3158555_Oficio_332.pdf" 
+      : (isTermoFomento
+        ? "/Transparencia_Termo_Fomento_998200_2026_Estrela_Guia.pdf"
+        : (driveInfo ? driveInfo.viewUrl : url)));
+
+  const displayTitle = isPlanejamento
+    ? "PLANEJAMENTO DO PROJETO — 2026"
+    : (isOficio 
+      ? "OFÍCIO Nº 332/2026 - EMENDA PARLAMENTAR 2026" 
+      : (isTermoFomento
+        ? "TRANSPARÊNCIA – TERMO DE FOMENTO Nº 998200/2026"
+        : title));
+
+  const displaySubtitle = isPlanejamento
+    ? "Documento Oficial Transferegov • Ministério da Cultura • 36 Páginas"
+    : (isOficio 
+      ? "Documento Original SEI nº 3158555 • Ministério da Cultura • 2 Páginas" 
+      : (isTermoFomento
+        ? "Documento Oficial • Termo de Fomento nº 998200/2026 • Ministério da Cultura • 3 Páginas"
+        : (previewPages ? `Documento Original • ${previewPages.length} ${previewPages.length > 1 ? "Páginas" : "Página"}` : (isDrive ? "Google Drive • Documento Oficial" : "Documento Oficial • Moçambique Estrela Guia"))));
+
+  const displayUrl = driveInfo 
+    ? driveInfo.previewUrl 
+    : (isPlanejamento 
+      ? "/planejamento-do-projeto-2026.pdf" 
+      : (isOficio 
+        ? "/SEI_3158555_Oficio_332.pdf" 
+        : (isTermoFomento
+          ? "/Transparencia_Termo_Fomento_998200_2026_Estrela_Guia.pdf"
+          : url)));
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-2 sm:p-4 lg:p-8 font-sans">
@@ -280,9 +366,7 @@ const PdfViewerModal = ({
                 {displayTitle}
               </span>
               <span className="text-[10px] text-primary/90 font-mono uppercase tracking-wider block">
-                {isOficio 
-                  ? "Documento Original SEI nº 3158555 • Ministério da Cultura • 2 Páginas" 
-                  : (previewPages ? `Documento Original • ${previewPages.length} ${previewPages.length > 1 ? "Páginas" : "Página"}` : (isDrive ? "Google Drive • Documento Oficial" : "Documento Oficial • Moçambique Estrela Guia"))}
+                {displaySubtitle}
               </span>
             </div>
           </div>
@@ -294,7 +378,7 @@ const PdfViewerModal = ({
                 <button
                   type="button"
                   onClick={() => setZoom(z => Math.max(75, z - 25))}
-                  className="p-1.5 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors"
+                  className="p-1.5 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors cursor-pointer"
                   title="Diminuir Zoom"
                 >
                   <ZoomOut className="w-4 h-4" />
@@ -305,7 +389,7 @@ const PdfViewerModal = ({
                 <button
                   type="button"
                   onClick={() => setZoom(z => Math.min(200, z + 25))}
-                  className="p-1.5 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors"
+                  className="p-1.5 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors cursor-pointer"
                   title="Aumentar Zoom"
                 >
                   <ZoomIn className="w-4 h-4" />
@@ -315,8 +399,8 @@ const PdfViewerModal = ({
 
             <a 
               href={effectiveDownloadUrl} 
-              download={isOficio ? "SEI_3158555_Oficio_332.pdf" : `${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}.pdf`}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-primary text-black hover:bg-orange-500 rounded-xl transition-all font-bold text-xs uppercase tracking-wider shadow-md"
+              download={effectiveDownloadFileName}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-primary text-black hover:bg-orange-500 rounded-xl transition-all font-bold text-xs uppercase tracking-wider shadow-md cursor-pointer"
               title="Baixar Arquivo Original"
             >
               <Download className="w-4 h-4" />
@@ -325,9 +409,9 @@ const PdfViewerModal = ({
             
             <a 
               href={effectiveViewUrl} 
-              target="_blank"
+              target="_blank" 
               rel="noopener noreferrer"
-              className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/60 hover:text-white border border-white/10 flex items-center gap-1"
+              className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/60 hover:text-white border border-white/10 flex items-center gap-1 cursor-pointer"
               title="Abrir em Nova Aba"
             >
               <ExternalLink className="w-4 h-4" />
@@ -336,7 +420,7 @@ const PdfViewerModal = ({
             
             <button 
               onClick={onClose} 
-              className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/60 hover:text-white border border-white/10"
+              className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/60 hover:text-white border border-white/10 cursor-pointer"
               title="Fechar"
             >
               <X className="w-5 h-5" />
@@ -348,6 +432,24 @@ const PdfViewerModal = ({
         <div className="flex-1 bg-[#0b0c10] relative flex flex-col min-h-0 overflow-y-auto p-4 sm:p-8">
           {previewPages ? (
             <div className="max-w-4xl mx-auto w-full space-y-6">
+              {isSpecialDoc && (
+                <div className="p-3.5 bg-white/[0.04] border border-white/10 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-white/70 px-5">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <div>
+                      <span className="font-bold text-white block">Documento Original (Somente Leitura)</span>
+                      <span className="text-[10px] text-white/50">Leitura direta sem necessidade de download • {previewPages.length} Páginas</span>
+                    </div>
+                  </div>
+                  <a
+                    href={effectiveDownloadUrl}
+                    download={effectiveDownloadFileName}
+                    className="inline-flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-xl bg-primary text-black font-black text-[11px] uppercase tracking-wider hover:bg-amber-400 transition-all shadow-md shrink-0 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Baixar Arquivo Original
+                  </a>
+                </div>
+              )}
               {previewPages.map((pageImg, idx) => (
                 <div 
                   key={idx}
@@ -642,12 +744,28 @@ const ImpactReportModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
 
 const DEFAULT_DOCUMENTS: TransparencyDoc[] = [
   { 
+    id: "planejamento-2026",
+    name: "PLANEJAMENTO DO PROJETO — 2026", 
+    link: "/planejamento-do-projeto-2026.pdf", 
+    backupLink: "https://drive.google.com/file/d/19I_zHMICgiIKCvMs5Ah-idKGU-CpNkEm/view?usp=sharing",
+    desc: "",
+    tag: "Transferegov • MinC"
+  },
+  { 
     id: "oficio-332",
     name: "OFÍCIO Nº 332/2026 - EMENDA PARLAMENTAR 2026", 
     link: "/SEI_3158555_Oficio_332.pdf", 
     backupLink: "https://drive.google.com/file/d/1wgwjiPAtaazA_-AsTgjznhci819qMMka/view?usp=sharing",
     desc: "",
     tag: "Ofício SEI • MinC"
+  },
+  { 
+    id: "termo-fomento-998200",
+    name: "TRANSPARÊNCIA – TERMO DE FOMENTO Nº 998200/2026", 
+    link: "/Transparencia_Termo_Fomento_998200_2026_Estrela_Guia.pdf", 
+    backupLink: "https://drive.google.com/file/d/1F47_6Ifo9z5Se_4lgEDTMRk3Aw2Snt_7/view?usp=sharing",
+    desc: "",
+    tag: "Termo de Fomento • MinC"
   },
   { 
     id: "estatuto",
@@ -684,14 +802,6 @@ const DEFAULT_DOCUMENTS: TransparencyDoc[] = [
     link: "/certidoes.pdf", 
     desc: "Regularidade Fiscal Federal (Receita/PGFN), Estadual, Municipal e Trabalhista",
     tag: "Certidão Conjunta"
-  },
-  { 
-    id: "transparencia",
-    name: "Transparência Governamental", 
-    link: "/SEI_3158555_Oficio_332.pdf", 
-    backupLink: "https://drive.google.com/file/d/1wgwjiPAtaazA_-AsTgjznhci819qMMka/view?usp=sharing",
-    desc: "Consulta de Convênios do Governo Federal (Portal da Transparência)",
-    tag: "Governo Federal"
   }
 ];
 
@@ -750,9 +860,16 @@ const TransparencyPortal = ({
 
         {/* Clean Dynamic Document Cards Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {docs.map((doc, i) => {
+          {docs
+            .filter(doc => doc.id !== "transparencia" && !doc.name.toLowerCase().includes("governamental"))
+            .map((doc, i) => {
             const driveInfo = parseDriveUrl(doc.link);
             const isDrive = isDriveUrl(doc.link);
+            const isPlanejamentoCard = 
+              doc.id === "planejamento-2026" || 
+              doc.id === "planejamento" ||
+              doc.name.toLowerCase().includes("planejamento");
+
             const isOficioCard = 
               doc.id === "oficio-332" || 
               doc.id === "emenda-parlamentar" || 
@@ -761,13 +878,30 @@ const TransparencyPortal = ({
               doc.name.toLowerCase().includes("ofício") ||
               doc.name.toLowerCase().includes("oficio");
 
-            const cardDownloadUrl = isOficioCard
-              ? "/SEI_3158555_Oficio_332.pdf"
-              : (isDrive ? (driveInfo ? driveInfo.downloadUrl : doc.link) : (doc.id === 'transparencia' ? '/SEI_3158555_Oficio_332.pdf' : doc.link));
+            const isTermoFomentoCard =
+              doc.id === "termo-fomento-998200" ||
+              doc.id === "termo-fomento" ||
+              doc.id === "transparencia-fomento" ||
+              doc.name.toLowerCase().includes("998200") ||
+              doc.name.toLowerCase().includes("termo de fomento");
 
-            const cardDownloadFileName = isOficioCard
-              ? "SEI_3158555_Oficio_332.pdf"
-              : `${doc.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.pdf`;
+            const isSpecialCard = isPlanejamentoCard || isOficioCard || isTermoFomentoCard;
+
+            const cardDownloadUrl = isPlanejamentoCard
+              ? "/planejamento-do-projeto-2026.pdf"
+              : (isOficioCard
+                ? "/SEI_3158555_Oficio_332.pdf"
+                : (isTermoFomentoCard
+                  ? "/Transparencia_Termo_Fomento_998200_2026_Estrela_Guia.pdf"
+                  : (isDrive ? (driveInfo ? driveInfo.downloadUrl : doc.link) : doc.link)));
+
+            const cardDownloadFileName = isPlanejamentoCard
+              ? "Planejamento-do-Projeto-2026-Estrela-Guia.pdf"
+              : (isOficioCard
+                ? "SEI_3158555_Oficio_332.pdf"
+                : (isTermoFomentoCard
+                  ? "Transparencia_Termo_Fomento_998200_2026_Estrela_Guia.pdf"
+                  : `${doc.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.pdf`));
 
             return (
               <motion.div 
@@ -777,7 +911,7 @@ const TransparencyPortal = ({
                 transition={{ delay: i * 0.05 }}
                 onClick={() => onViewPdf(doc.link, doc.name, doc.id)}
                 className={`group relative p-8 rounded-3xl bg-white/[0.02] border transition-all text-left overflow-hidden min-h-[230px] flex flex-col justify-between cursor-pointer hover:bg-white/[0.04] shadow-xl ${
-                  isOficioCard ? "border-primary/40 hover:border-primary shadow-primary/5" : "border-white/10 hover:border-primary"
+                  isSpecialCard ? "border-primary/40 hover:border-primary shadow-primary/5" : "border-white/10 hover:border-primary"
                 }`}
               >
                  {/* Direct Download Button */}
@@ -814,8 +948,8 @@ const TransparencyPortal = ({
                      <h3 className="text-lg font-black text-white group-hover:text-primary transition-colors mb-2 uppercase tracking-tight">
                        {doc.name}
                      </h3>
-                     {/* No large text underneath for Ofício block as explicitly requested */}
-                     {!isOficioCard && doc.desc && (
+                     {/* No large text underneath for special blocks as explicitly requested */}
+                     {!isSpecialCard && doc.desc && (
                        <p className="text-[11px] text-white/50 leading-relaxed font-medium mb-3">
                          {doc.desc}
                        </p>
@@ -823,7 +957,7 @@ const TransparencyPortal = ({
                    </div>
                  </div>
 
-                 {isOficioCard ? (
+                 {isSpecialCard ? (
                    <div className="mt-6 pt-3 border-t border-white/5 flex flex-col gap-2">
                      <a
                        href={cardDownloadUrl}
@@ -3282,15 +3416,7 @@ export default function EstrelaGuiaSite() {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const hasOficio = parsed.some(d => 
-            d.id === "oficio-332" || 
-            d.id === "emenda-parlamentar" || 
-            d.id === "oficio" ||
-            d.name.toLowerCase().includes("332") || 
-            d.name.toLowerCase().includes("emenda")
-          );
-
-          const updated = parsed.map(d => {
+          let list = parsed.map(d => {
             if (
               d.id === "oficio-332" || 
               d.id === "emenda-parlamentar" || 
@@ -3308,13 +3434,73 @@ export default function EstrelaGuiaSite() {
                 tag: "Ofício SEI • MinC"
               };
             }
+            if (
+              d.id === "planejamento-2026" ||
+              d.name.toLowerCase().includes("planejamento")
+            ) {
+              return {
+                ...d,
+                id: "planejamento-2026",
+                name: "PLANEJAMENTO DO PROJETO — 2026",
+                link: "/planejamento-do-projeto-2026.pdf",
+                backupLink: "https://drive.google.com/file/d/19I_zHMICgiIKCvMs5Ah-idKGU-CpNkEm/view?usp=sharing",
+                desc: "",
+                tag: "Transferegov • MinC"
+              };
+            }
+            if (
+              d.id === "termo-fomento-998200" ||
+              d.id === "termo-fomento" ||
+              d.name.toLowerCase().includes("998200") ||
+              d.name.toLowerCase().includes("termo de fomento")
+            ) {
+              return {
+                ...d,
+                id: "termo-fomento-998200",
+                name: "TRANSPARÊNCIA – TERMO DE FOMENTO Nº 998200/2026",
+                link: "/Transparencia_Termo_Fomento_998200_2026_Estrela_Guia.pdf",
+                backupLink: "https://drive.google.com/file/d/1F47_6Ifo9z5Se_4lgEDTMRk3Aw2Snt_7/view?usp=sharing",
+                desc: "",
+                tag: "Termo de Fomento • MinC"
+              };
+            }
             return d;
           });
 
-          if (!hasOficio) {
-            return [DEFAULT_DOCUMENTS[0], ...updated];
+          const hasPlanejamento = list.some(d => d.id === "planejamento-2026");
+          if (!hasPlanejamento) {
+            const oficioIdx = list.findIndex(d => d.id === "oficio-332");
+            if (oficioIdx >= 0) {
+              list.splice(oficioIdx, 0, DEFAULT_DOCUMENTS[0]);
+            } else {
+              list = [DEFAULT_DOCUMENTS[0], ...list];
+            }
           }
-          return updated;
+
+          const hasTermoFomento = list.some(d => d.id === "termo-fomento-998200" || d.name.includes("998200"));
+          if (!hasTermoFomento) {
+            const termoDoc = DEFAULT_DOCUMENTS.find(d => d.id === "termo-fomento-998200");
+            if (termoDoc) {
+              const oficioIdx = list.findIndex(d => d.id === "oficio-332");
+              if (oficioIdx >= 0) {
+                list.splice(oficioIdx + 1, 0, termoDoc);
+              } else {
+                list.push(termoDoc);
+              }
+            }
+          }
+          // Remove duplicate / obsolete Transparência Governamental card
+          list = list.filter(d => 
+            d.id !== "transparencia" && 
+            !d.name.toLowerCase().includes("transparência governamental") &&
+            !d.name.toLowerCase().includes("transparencia governamental")
+          );
+
+          try {
+            localStorage.setItem("estrela_guia_documents_config", JSON.stringify(list));
+          } catch (e) {}
+
+          return list;
         }
       } catch (e) {}
     }

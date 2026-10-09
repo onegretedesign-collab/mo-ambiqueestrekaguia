@@ -27,13 +27,14 @@ interface DocumentManagerModalProps {
 }
 
 const PRELOADED_FILES = [
+  { name: "PLANEJAMENTO DO PROJETO — 2026 (Transferegov MinC)", path: "/planejamento-do-projeto-2026.pdf" },
   { name: "OFÍCIO Nº 332/2026 - EMENDA PARLAMENTAR 2026 (PDF Original)", path: "/SEI_3158555_Oficio_332.pdf" },
+  { name: "TRANSPARÊNCIA – TERMO DE FOMENTO Nº 998200/2026 (PDF Oficial)", path: "/Transparencia_Termo_Fomento_998200_2026_Estrela_Guia.pdf" },
   { name: "Estatuto Social (PDF Original)", path: "/estatuto.pdf" },
   { name: "Relatório de Atividades (PDF Oficial)", path: "/relatorio.pdf" },
   { name: "Ata de Eleição e Posse (PDF Oficial)", path: "/ata-eleicao.pdf" },
   { name: "Cartão CNPJ (Receita Federal)", path: "/cnpj.pdf" },
-  { name: "Certidões Negativas (Receita/PGFN)", path: "/certidoes.pdf" },
-  { name: "Transparência Governamental (Gov Federal)", path: "/transparencia.pdf" }
+  { name: "Certidões Negativas (Receita/PGFN)", path: "/certidoes.pdf" }
 ];
 
 export const DocumentManagerModal = ({
